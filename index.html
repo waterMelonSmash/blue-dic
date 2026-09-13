@@ -5,8 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>푸른 바다 한자 퍼즐</title>
 
-<script src="data.js"></script>
-
 <style>
   * { 
     box-sizing: border-box;
@@ -526,6 +524,85 @@ function triggerVibration(pattern) {
 }
 
 // ====================================================================
+// [구글 스프레드시트 실시간 연동 시스템]
+// ====================================================================
+const URL_HANJA_DATA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCtYO07v05Ud7heXDdK7k4RCaG5i5oELPe5oBhvFw6yaKsxXzKVO1L2_Lodc89WtLgNO3T5V5a-r8v/pub?gid=0&single=true&output=csv";
+const URL_WORD_DATA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_lQ7_Yh-iunlhLfMAjwRXUM56iiP6UWAsx3VcsxF6yENBYfN3CwdGITxAOd-LtkzmQxJw98J4xZVH/pub?gid=0&single=true&output=csv";
+
+let HANJA_DICT = {};
+let WORD_DATABASE = [];
+let ALL_DICT_KEYS = [];
+
+// 따옴표 및 줄바꿈을 완벽히 지원하는 정밀 CSV 파서
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  return lines.map(line => {
+    const row = [];
+    let insideQuote = false;
+    let entry = '';
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        insideQuote = !insideQuote;
+      } else if (char === ',' && !insideQuote) {
+        row.push(entry.trim());
+        entry = '';
+      } else {
+        entry += char;
+      }
+    }
+    row.push(entry.trim());
+    return row;
+  });
+}
+
+async function loadSheetData() {
+  try {
+    const [resHanja, resWord] = await Promise.all([
+      fetch(URL_HANJA_DATA),
+      fetch(URL_WORD_DATA)
+    ]);
+
+    const textHanja = await resHanja.text();
+    const textWord = await resWord.text();
+
+    const rowsHanja = parseCSV(textHanja);
+    const rowsWord = parseCSV(textWord);
+
+    // 1. hanja_data 파싱 (A: hanja, B: file, C: desc)
+    HANJA_DICT = {};
+    for (let i = 1; i < rowsHanja.length; i++) {
+      const r = rowsHanja[i];
+      if (!r[0]) continue;
+      HANJA_DICT[r[0]] = {
+        file: r[1] || "",
+        desc: r[2] || "",
+        fallback: r[0]
+      };
+    }
+    ALL_DICT_KEYS = Object.keys(HANJA_DICT);
+
+    // 2. hanja_word_data 파싱 (A: hanja_word, B: desc, C: file)
+    WORD_DATABASE = [];
+    for (let i = 1; i < rowsWord.length; i++) {
+      const r = rowsWord[i];
+      if (!r[0]) continue;
+      WORD_DATABASE.push({
+        hanja: r[0],
+        desc: r[1] || "",
+        file: r[2] || "",
+        fallback: r[0]
+      });
+    }
+
+    return true;
+  } catch (err) {
+    console.error("구글 스프레드시트 데이터 연동 실패:", err);
+    return false;
+  }
+}
+
+// ====================================================================
 // [ 소 / 중 / 대 ] 레이아웃 모드 제어
 // ====================================================================
 let currentMode = localStorage.getItem('hanja_ocean_layout_mode') || 'medium';
@@ -594,12 +671,12 @@ const TIER_SPECS = [
     tier: 3,
     name: "대왕고래급",
     files: [
-      "emojis/fish rank/tier3/whale1.svg",
-      "emojis/fish rank/tier3/whale2.svg",
-      "emojis/fish rank/tier3/whale3.svg"
+      "emojis/fish rank/whale1.svg",
+      "emojis/fish rank/whale2.svg",
+      "emojis/fish rank/whale3.svg"
     ],
     fallbackEmojis: ["🐋", "🐳"],
-    size: 140, speedMin: 0.35, speedMax: 0.53,
+    size: 140, speedMin: 0.22, speedMax: 0.38,
     tintAlpha: 0.35,
     bodyAlpha: 0.95
   },
@@ -607,12 +684,12 @@ const TIER_SPECS = [
     tier: 2,
     name: "상어/돌고래급",
     files: [
-      "emojis/fish rank/tier2/shark1.svg",
-      "emojis/fish rank/tier2/shark.svg",
-      "emojis/fish rank/tier2/sunfish.svg"
+      "emojis/fish rank/shark1.svg",
+      "emojis/fish rank/shark.svg",
+      "emojis/fish rank/sunfish.svg"
     ],
     fallbackEmojis: ["🦈", "🐬"],
-    size: 90, speedMin: 0.35, speedMax: 0.6,
+    size: 90, speedMin: 0.3, speedMax: 0.55,
     tintAlpha: 0.38,
     bodyAlpha: 0.92
   },
@@ -620,12 +697,13 @@ const TIER_SPECS = [
     tier: 1,
     name: "거북/가오리급",
     files: [
-      "emojis/fish rank/tier1/seaturtle.svg",
-      "emojis/fish rank/tier1/squid.svg",
-      "emojis/fish rank/tier1/jellyfish.svg"
+      "emojis/turtle.svg",
+      "emojis/puffer.svg",
+      "emojis/stingray.svg",
+      "emojis/octopus.svg"
     ],
     fallbackEmojis: ["🐢", "🐡", "🐙"],
-    size: 52, speedMin: 0.43, speedMax: 0.7,
+    size: 52, speedMin: 0.35, speedMax: 0.65,
     tintAlpha: 0.42,
     bodyAlpha: 0.90
   },
@@ -633,13 +711,14 @@ const TIER_SPECS = [
     tier: 0,
     name: "작은 물고기급",
     files: [
-      "emojis/fish rank/tier0/clown_fish.svg",
-      "emojis/fish rank/tier0/fish1.svg",
-      "emojis/fish rank/tier0/fish2.svg",
-      "emojis/fish rank/tier0/shrimp.svg"
+      "emojis/fish.svg",
+      "emojis/fish2.svg",
+      "emojis/clownfish.svg",
+      "emojis/seahorse.svg",
+      "emojis/squid.svg"
     ],
     fallbackEmojis: ["🐟", "🐠", "🦐", "🦑"],
-    size: 32, speedMin: 0.5, speedMax: 0.85,
+    size: 32, speedMin: 0.3, speedMax: 0.5,
     tintAlpha: 0.35,
     bodyAlpha: 0.94
   }
@@ -665,8 +744,6 @@ let solvedCountInRound = 0;
 let board = [];
 let cellMap = {};
 let activeTooltipTarget = null;
-
-const ALL_DICT_KEYS = Object.keys(HANJA_DICT);
 
 // ====================================================================
 // 샘플 보기 커스텀 숫자 입력 및 화면 상태 전체 백업/복원 시스템
@@ -847,7 +924,6 @@ function updateTierText() {
   tierEl.innerText = `현재 [${summary.join(' | ')}] (다음 합체까지 ${nextTierNeeded}문제)`;
 }
 
-// 티어별 수심 범위 설정
 function getTierDepthBounds(tier) {
   if (tier >= 2) {
     return { min: height * 0.08, max: height * 0.92 };
@@ -874,14 +950,13 @@ function syncEcosystem() {
         const chosenFileIndex = Math.floor(Math.random() * spec.files.length);
         const chosenFallbackEmoji = spec.fallbackEmojis[Math.floor(Math.random() * spec.fallbackEmojis.length)];
         const bounds = getTierDepthBounds(spec.tier);
-        const speed = Math.random() * (spec.speedMax - spec.speedMin) + spec.speedMin;
+        const totalSpeed = Math.random() * (spec.speedMax - spec.speedMin) + spec.speedMin;
         
-        // 고티어는 상하 대각선 각도를 부여, 저티어는 완만한 각도
         let angle;
         if (spec.tier >= 2) {
-          angle = (Math.random() * 0.5 + 0.3) * (Math.random() > 0.5 ? 1 : -1);
+          angle = (Math.random() * 0.7 + 0.5) * (Math.random() > 0.5 ? 1 : -1);
         } else {
-          angle = (Math.random() - 0.5) * 0.25;
+          angle = (Math.random() - 0.5) * 0.35;
         }
 
         newCreatures.push({
@@ -894,10 +969,11 @@ function syncEcosystem() {
           tintAlpha: spec.tintAlpha,
           x: Math.random() * width,
           y: Math.random() * (bounds.max - bounds.min) + bounds.min,
-          vx: Math.cos(angle) * speed * (toRight ? 1 : -1),
-          vy: Math.sin(angle) * speed,
-          speed: speed,
-          facingRight: toRight
+          vx: Math.cos(angle) * totalSpeed * (toRight ? 1 : -1),
+          vy: Math.sin(angle) * totalSpeed,
+          maxSpeed: totalSpeed,
+          facingRight: toRight,
+          changeTimer: Math.random() * 250 + 150
         });
       }
     }
@@ -981,34 +1057,43 @@ function renderOcean() {
     ctx.fill();
   });
 
-  // 도중에 꺾이지 않고 화면 끝에 도달할 때까지 한 방향으로 쭉 직진하는 유영 로직
   swimmingCreatures.forEach(c => {
     const bounds = getTierDepthBounds(c.tier);
+
+    c.changeTimer--;
+    if (c.changeTimer <= 0) {
+      const angle = c.tier >= 2 
+        ? (Math.random() * 0.7 + 0.4) * (Math.random() > 0.5 ? 1 : -1) 
+        : (Math.random() - 0.5) * 0.35;
+      const currentDir = c.vx >= 0 ? 1 : -1;
+      const currentSpeed = Math.random() * (c.spec.speedMax - c.spec.speedMin) + c.spec.speedMin;
+      c.vx = Math.cos(angle) * currentSpeed * currentDir;
+      c.vy = Math.sin(angle) * currentSpeed;
+      c.changeTimer = Math.random() * 250 + 150;
+    }
 
     c.x += c.vx;
     c.y += c.vy;
 
-    // 상하 수심 바닥/천장에 닿으면 반사
     if (c.y < bounds.min) {
       c.y = bounds.min;
-      c.vy = -c.vy;
+      c.vy = Math.abs(c.vy);
     } else if (c.y > bounds.max) {
       c.y = bounds.max;
-      c.vy = -c.vy;
+      c.vy = -Math.abs(c.vy);
     }
 
     const turnMargin = c.size * 0.8;
 
-    // 좌우 화면 끝(벽)에 도달했을 때만 방향을 반대로 꺾고 새로운 대각선 각도 부여
     if (c.vx > 0 && c.x > width + turnMargin) {
       const speed = Math.random() * (c.spec.speedMax - c.spec.speedMin) + c.spec.speedMin;
-      const angle = c.tier >= 2 ? (Math.random() * 0.5 + 0.3) * (Math.random() > 0.5 ? 1 : -1) : (Math.random() - 0.5) * 0.25;
+      const angle = c.tier >= 2 ? (Math.random() * 0.7 + 0.4) * (Math.random() > 0.5 ? 1 : -1) : (Math.random() - 0.5) * 0.35;
       c.vx = -Math.cos(angle) * speed;
       c.vy = Math.sin(angle) * speed;
       c.facingRight = false;
     } else if (c.vx < 0 && c.x < -turnMargin) {
       const speed = Math.random() * (c.spec.speedMax - c.spec.speedMin) + c.spec.speedMin;
-      const angle = c.tier >= 2 ? (Math.random() * 0.5 + 0.3) * (Math.random() > 0.5 ? 1 : -1) : (Math.random() - 0.5) * 0.25;
+      const angle = c.tier >= 2 ? (Math.random() * 0.7 + 0.4) * (Math.random() > 0.5 ? 1 : -1) : (Math.random() - 0.5) * 0.35;
       c.vx = Math.cos(angle) * speed;
       c.vy = Math.sin(angle) * speed;
       c.facingRight = true;
@@ -1086,7 +1171,7 @@ function renderOcean() {
 }
 
 // ====================================================================
-// 2. 툴팁 및 안전 격자판 생성
+// 2. 툴팁 및 격자판 생성 시스템
 // ====================================================================
 const tooltipEl = document.getElementById('tooltip');
 
@@ -1197,6 +1282,9 @@ function generateSafeBoard() {
 function startNewGame() {
   hideTooltip();
   solvedCountInRound = 0;
+
+  if (WORD_DATABASE.length === 0) return;
+
   const shuffled = [...WORD_DATABASE].sort(() => 0.5 - Math.random());
   currentQuestions = shuffled.slice(0, 4).map((q, idx) => ({ ...q, id: `q_${idx}`, isFound: false }));
 
@@ -1415,11 +1503,22 @@ gridEl.addEventListener('touchstart', handleStart, { passive: true });
 window.addEventListener('touchmove', handleMove, { passive: true });
 window.addEventListener('touchend', handleEnd, { passive: true });
 
-// 초기 구동
-syncEcosystem();
-renderOcean();
-startNewGame();
-updateLayoutUI();
+// ====================================================================
+// 앱 초기화 및 구글 시트 데이터 로드 시작
+// ====================================================================
+async function initGameApp() {
+  const success = await loadSheetData();
+  if (success) {
+    syncEcosystem();
+    renderOcean();
+    startNewGame();
+    updateLayoutUI();
+  } else {
+    alert("구글 시트 데이터를 불러오는 데 실패했습니다. 인터넷 연결이나 링크 설정을 확인해주세요.");
+  }
+}
+
+initGameApp();
 </script>
 
 </body>
