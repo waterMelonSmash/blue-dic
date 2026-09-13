@@ -1052,12 +1052,28 @@ function renderOcean() {
 
   swimmingCreatures.forEach(c => {
     const bounds = getTierDepthBounds(c.tier);
+    const turnMargin = c.size * 0.8;
 
-    // 1. 위아래 완만한 유영 각도만 타이머로 갱신 (좌우 진행 방향은 엄격히 유지)
+    // 1. 좌우 벽 튕김 및 위치 보정 (완전한 양방향 유턴)
+    if (c.x > width + turnMargin) {
+      c.x = width + turnMargin;
+      c.facingRight = false;
+      const speed = Math.random() * (c.spec.speedMax - c.spec.speedMin) + c.spec.speedMin;
+      c.vx = -Math.abs(speed);
+      c.changeTimer = Math.random() * 150 + 100;
+    } else if (c.x < -turnMargin) {
+      c.x = -turnMargin;
+      c.facingRight = true;
+      const speed = Math.random() * (c.spec.speedMax - c.spec.speedMin) + c.spec.speedMin;
+      c.vx = Math.abs(speed);
+      c.changeTimer = Math.random() * 150 + 100;
+    }
+
+    // 2. 화면 안쪽에서만 자연스러운 각도 전환 실행
     c.changeTimer--;
     if (c.changeTimer <= 0) {
       const speed = Math.random() * (c.spec.speedMax - c.spec.speedMin) + c.spec.speedMin;
-      const pitchAngle = (Math.random() - 0.5) * (c.tier >= 2 ? 0.6 : 0.4);
+      const pitchAngle = (Math.random() - 0.5) * (c.tier >= 2 ? 0.5 : 0.3);
       
       const dir = c.facingRight ? 1 : -1;
       c.vx = Math.abs(Math.cos(pitchAngle) * speed) * dir;
@@ -1068,28 +1084,13 @@ function renderOcean() {
     c.x += c.vx;
     c.y += c.vy;
 
-    // 2. 수심 상/하단 경계 이탈 방지
+    // 3. 수심 상/하단 경계 이탈 방지
     if (c.y < bounds.min) {
       c.y = bounds.min;
       c.vy = Math.abs(c.vy);
     } else if (c.y > bounds.max) {
       c.y = bounds.max;
       c.vy = -Math.abs(c.vy);
-    }
-
-    const turnMargin = c.size * 1.2;
-
-    // 3. 좌우 경계 유턴 판정 (확실하게 방향 전환 및 속도 반전)
-    if (c.x > width + turnMargin && c.vx > 0) {
-      c.facingRight = false;
-      const speed = Math.random() * (c.spec.speedMax - c.spec.speedMin) + c.spec.speedMin;
-      c.vx = -Math.abs(speed);
-      c.changeTimer = Math.random() * 200 + 150;
-    } else if (c.x < -turnMargin && c.vx < 0) {
-      c.facingRight = true;
-      const speed = Math.random() * (c.spec.speedMax - c.spec.speedMin) + c.spec.speedMin;
-      c.vx = Math.abs(speed);
-      c.changeTimer = Math.random() * 200 + 150;
     }
 
     ctx.save();
