@@ -20,16 +20,11 @@
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    
     min-height: 100vh;
     min-height: 100dvh;
-    
     margin: 0;
     padding: calc(10px + env(safe-area-inset-top)) 8px calc(14px + env(safe-area-inset-bottom)) 8px;
-    
     touch-action: none;
-    user-select: none;
-    -webkit-user-select: none;
     position: relative;
     overflow: hidden;
     background: radial-gradient(ellipse at 50% 0%, #0369a1 0%, #082f49 55%, #020617 100%);
@@ -104,7 +99,6 @@
     font-size: 13px;
     letter-spacing: 0.3px;
     text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
-    transition: color 0.3s ease, text-shadow 0.3s ease;
   }
   .ocean-header.sample-mode .fish-count {
     color: #facc15;
@@ -182,8 +176,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    transition: border-color 0.25s ease, box-shadow 0.25s ease, width 0.25s ease, height 0.25s ease;
-    -webkit-touch-callout: none;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease;
   }
 
   .quest-card img {
@@ -192,7 +185,6 @@
     object-fit: cover;
     display: block;
     pointer-events: none;
-    -webkit-touch-callout: none;
     transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
@@ -309,7 +301,6 @@
     height: 28px;
     object-fit: contain;
     pointer-events: none;
-    -webkit-touch-callout: none;
     opacity: 0.95;
   }
 
@@ -340,7 +331,6 @@
     cursor: pointer;
     opacity: 0.45;
     transition: opacity 0.2s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
-    -webkit-tap-highlight-color: transparent;
   }
   #next-refresh-btn:active {
     opacity: 0.9;
@@ -383,11 +373,6 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-    animation: popIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  @keyframes popIn {
-    from { transform: scale(0.85); opacity: 0; }
-    to { transform: scale(1); opacity: 1; }
   }
 
   .modal-title {
@@ -395,7 +380,6 @@
     font-weight: bold;
     color: #64ffda;
     text-align: center;
-    margin-bottom: 2px;
   }
 
   .mode-select-label {
@@ -419,16 +403,11 @@
     font-size: 12px;
     font-weight: 700;
     cursor: pointer;
-    transition: all 0.15s ease;
-  }
-  .size-btn:active {
-    transform: scale(0.96);
   }
   .size-btn.active {
     background: rgba(56, 189, 248, 0.38);
     border-color: #38bdf8;
     color: #ffffff;
-    box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
   }
 
   .modal-btn {
@@ -440,15 +419,9 @@
     font-size: 12px;
     font-weight: 600;
     cursor: pointer;
-    transition: background 0.15s, transform 0.1s;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 6px;
-  }
-  .modal-btn:active {
-    transform: scale(0.97);
-    background: rgba(14, 116, 144, 0.7);
   }
   .modal-btn.sample {
     background: rgba(245, 158, 11, 0.3);
@@ -469,7 +442,6 @@
     background: transparent;
     border: none;
     color: #94a3b8;
-    margin-top: 4px;
   }
 </style>
 </head>
@@ -524,7 +496,7 @@ function triggerVibration(pattern) {
 }
 
 // ====================================================================
-// [구글 스프레드시트 실시간 연동 시스템]
+// [구글 스프레드시트 실시간 연동]
 // ====================================================================
 const URL_HANJA_DATA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCtYO07v05Ud7heXDdK7k4RCaG5i5oELPe5oBhvFw6yaKsxXzKVO1L2_Lodc89WtLgNO3T5V5a-r8v/pub?gid=0&single=true&output=csv";
 const URL_WORD_DATA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_lQ7_Yh-iunlhLfMAjwRXUM56iiP6UWAsx3VcsxF6yENBYfN3CwdGITxAOd-LtkzmQxJw98J4xZVH/pub?gid=0&single=true&output=csv";
@@ -568,7 +540,6 @@ async function loadSheetData() {
     const rowsHanja = parseCSV(textHanja);
     const rowsWord = parseCSV(textWord);
 
-    // 1. hanja_data 파싱 (A: hanja, B: file, C: desc)
     HANJA_DICT = {};
     for (let i = 1; i < rowsHanja.length; i++) {
       const r = rowsHanja[i];
@@ -581,7 +552,6 @@ async function loadSheetData() {
     }
     ALL_DICT_KEYS = Object.keys(HANJA_DICT);
 
-    // 2. hanja_word_data 파싱 (A: hanja_word, B: desc, C: file)
     WORD_DATABASE = [];
     for (let i = 1; i < rowsWord.length; i++) {
       const r = rowsWord[i];
@@ -593,7 +563,6 @@ async function loadSheetData() {
         fallback: r[0]
       });
     }
-
     return true;
   } catch (err) {
     console.error("구글 스프레드시트 데이터 연동 실패:", err);
@@ -602,7 +571,7 @@ async function loadSheetData() {
 }
 
 // ====================================================================
-// [ 소 / 중 / 대 ] 레이아웃 모드 제어
+// [화면 모드 관리]
 // ====================================================================
 let currentMode = localStorage.getItem('hanja_ocean_layout_mode') || 'medium';
 
@@ -634,22 +603,13 @@ function setGameMode(mode) {
   updateLayoutUI();
 }
 
-function openSettings() {
-  document.getElementById('settings-modal').classList.add('active');
-}
-function closeSettings() {
-  document.getElementById('settings-modal').classList.remove('active');
-}
-function handleModalBgClick(e) {
-  if (e.target.id === 'settings-modal') closeSettings();
-}
-function execAction(fn) {
-  closeSettings();
-  fn();
-}
+function openSettings() { document.getElementById('settings-modal').classList.add('active'); }
+function closeSettings() { document.getElementById('settings-modal').classList.remove('active'); }
+function handleModalBgClick(e) { if (e.target.id === 'settings-modal') closeSettings(); }
+function execAction(fn) { closeSettings(); fn(); }
 
 // ====================================================================
-// 1. 수중 원근감 & 오프스크린 심해 렌더러
+// [심해 캔버스 물리 렌더러 - 반사 굴절 및 유속/수심 차등화]
 // ====================================================================
 const canvas = document.getElementById('oceanCanvas');
 const ctx = canvas.getContext('2d');
@@ -665,6 +625,7 @@ window.addEventListener('resize', resizeCanvas);
 const tintCanvas = document.createElement('canvas');
 const tintCtx = tintCanvas.getContext('2d');
 
+// 티어별 속도(저티어 느림 -> 고티어 빠름) 및 서식 수심(상하 범위)
 const TIER_SPECS = [
   {
     tier: 3,
@@ -675,7 +636,9 @@ const TIER_SPECS = [
       "emojis/fish/fish_rank/tier3_whale3.svg"
     ],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier3_FB.svg",
-    size: 140, speedMin: 0.22, speedMax: 0.38,
+    size: 140,
+    speedMin: 1.6, speedMax: 2.2, // 고티어: 가장 빠름
+    depthMinRatio: 0.05, depthMaxRatio: 0.95, // 전 수심 자유 유영
     tintAlpha: 0.35,
     bodyAlpha: 0.95
   },
@@ -689,7 +652,9 @@ const TIER_SPECS = [
       "emojis/fish/fish_rank/tier2_sunfish.svg"
     ],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier2_FB.svg",
-    size: 90, speedMin: 0.3, speedMax: 0.55,
+    size: 90,
+    speedMin: 1.2, speedMax: 1.6,
+    depthMinRatio: 0.08, depthMaxRatio: 0.88,
     tintAlpha: 0.38,
     bodyAlpha: 0.92
   },
@@ -702,7 +667,9 @@ const TIER_SPECS = [
       "emojis/fish/fish_rank/tier1_squid.svg"
     ],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier1_FB.svg",
-    size: 52, speedMin: 0.35, speedMax: 0.65,
+    size: 52,
+    speedMin: 0.7, speedMax: 1.0,
+    depthMinRatio: 0.10, depthMaxRatio: 0.55, // 중상층
     tintAlpha: 0.42,
     bodyAlpha: 0.90
   },
@@ -716,7 +683,9 @@ const TIER_SPECS = [
       "emojis/fish/fish_rank/tier0_shrimp.svg"
     ],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier0_FB.svg",
-    size: 32, speedMin: 0.3, speedMax: 0.5,
+    size: 32,
+    speedMin: 0.4, speedMax: 0.6, // 저티어: 가장 느림
+    depthMinRatio: 0.05, depthMaxRatio: 0.30, // 수면 근처 표층
     tintAlpha: 0.35,
     bodyAlpha: 0.94
   }
@@ -747,7 +716,7 @@ let cellMap = {};
 let activeTooltipTarget = null;
 
 // ====================================================================
-// 샘플 보기 커스텀 숫자 입력 및 화면 상태 백업/복원
+// [샘플 보기 기능]
 // ====================================================================
 let isSampleMode = false;
 let backupSolvedCount = 0;
@@ -776,7 +745,6 @@ function handleSampleClick() {
     backupSolvedInRound = solvedCountInRound;
 
     totalSolvedCount = targetNum;
-
     header.classList.add('sample-mode');
     sampleBtn.classList.add('active');
     sampleBtn.innerText = "샘플 보기 중지 (원래대로)";
@@ -876,18 +844,14 @@ function spawnBubbles(x, y, count, isBig = false, reachSurface = false) {
 }
 
 window.addEventListener('touchstart', (e) => {
-  if (e.target.closest('#grid') || e.target.closest('.quest-card') || e.target.closest('#settings-btn') || e.target.closest('#settings-modal') || e.target.closest('#next-refresh-btn')) {
-    return;
-  }
+  if (e.target.closest('#grid') || e.target.closest('.quest-card') || e.target.closest('#settings-btn') || e.target.closest('#settings-modal') || e.target.closest('#next-refresh-btn')) return;
   e.preventDefault();
   const touch = e.touches[0];
   spawnBubbles(touch.clientX, touch.clientY, Math.floor(Math.random() * 3) + 5, false, false);
 }, { passive: false });
 
 window.addEventListener('mousedown', (e) => {
-  if (e.target.closest('#grid') || e.target.closest('.quest-card') || e.target.closest('#settings-btn') || e.target.closest('#settings-modal') || e.target.closest('#next-refresh-btn')) {
-    return;
-  }
+  if (e.target.closest('#grid') || e.target.closest('.quest-card') || e.target.closest('#settings-btn') || e.target.closest('#settings-modal') || e.target.closest('#next-refresh-btn')) return;
   spawnBubbles(e.clientX, e.clientY, Math.floor(Math.random() * 3) + 5, false, false);
 });
 
@@ -925,16 +889,6 @@ function updateTierText() {
   tierEl.innerText = `현재 [${summary.join(' | ')}] (다음 합체까지 ${nextTierNeeded}문제)`;
 }
 
-function getTierDepthBounds(tier) {
-  if (tier >= 2) {
-    return { min: height * 0.08, max: height * 0.92 };
-  } else if (tier === 1) {
-    return { min: height * 0.12, max: height * 0.50 };
-  } else {
-    return { min: height * 0.05, max: height * 0.32 };
-  }
-}
-
 function syncEcosystem() {
   const counts = calculateCreatureCounts(totalSolvedCount);
   const newCreatures = [];
@@ -947,12 +901,21 @@ function syncEcosystem() {
       if (existing[i]) {
         newCreatures.push(existing[i]);
       } else {
-        const toRight = Math.random() > 0.5;
         const chosenFileIndex = Math.floor(Math.random() * spec.files.length);
-        const bounds = getTierDepthBounds(spec.tier);
-        const totalSpeed = Math.random() * (spec.speedMax - spec.speedMin) + spec.speedMin;
+        const speed = Math.random() * (spec.speedMax - spec.speedMin) + spec.speedMin;
         
-        let pitchAngle = (Math.random() - 0.5) * (spec.tier >= 2 ? 0.6 : 0.4);
+        // 티어별 상하 입사각 범위 (고티어일수록 가파른 상하 각도로 이동 가능)
+        let angle;
+        if (spec.tier >= 2) {
+          angle = (Math.random() * Math.PI * 2); // 360도 전방향 발사
+        } else {
+          // 저티어: 완만한 대각선 각도 (너무 수직으로 꽂히지 않게 제한)
+          const side = Math.random() > 0.5 ? 0 : Math.PI;
+          angle = side + (Math.random() - 0.5) * 1.2;
+        }
+
+        const minY = height * spec.depthMinRatio;
+        const maxY = height * spec.depthMaxRatio;
 
         newCreatures.push({
           tier: spec.tier,
@@ -962,11 +925,10 @@ function syncEcosystem() {
           bodyAlpha: spec.bodyAlpha,
           tintAlpha: spec.tintAlpha,
           x: Math.random() * width,
-          y: Math.random() * (bounds.max - bounds.min) + bounds.min,
-          vx: Math.cos(pitchAngle) * totalSpeed * (toRight ? 1 : -1),
-          vy: Math.sin(pitchAngle) * totalSpeed,
-          facingRight: toRight,
-          changeTimer: Math.random() * 200 + 150
+          y: Math.random() * (maxY - minY) + minY,
+          vx: Math.cos(angle) * speed,
+          vy: Math.sin(angle) * speed,
+          speed: speed
         });
       }
     }
@@ -982,7 +944,6 @@ function onCorrectWord(sourceX, sourceY) {
   if (!isSampleMode) {
     localStorage.setItem('hanja_ocean_fish_count', totalSolvedCount);
   }
-
   syncEcosystem();
 
   const isMerging = (Math.floor(totalSolvedCount / 10) > Math.floor((totalSolvedCount - 1) / 10)) ||
@@ -1024,7 +985,14 @@ const ambientBubbles = Array.from({ length: 24 }, () => ({
   phase: Math.random() * Math.PI * 2
 }));
 
-function renderOcean() {
+let lastRenderTime = performance.now();
+
+function renderOcean(currentTime) {
+  // 모바일/PC 간 속도 일치용 Delta Time 보정 (60fps 기준 계수)
+  const dt = Math.min((currentTime - lastRenderTime) / 1000, 0.1);
+  lastRenderTime = currentTime;
+  const timeScale = dt * 60;
+
   ctx.clearRect(0, 0, width, height);
 
   ctx.save();
@@ -1037,8 +1005,8 @@ function renderOcean() {
   ctx.restore();
 
   ambientBubbles.forEach(b => {
-    b.y -= b.speed;
-    b.phase += 0.02;
+    b.y -= b.speed * timeScale;
+    b.phase += 0.02 * timeScale;
     b.x += Math.sin(b.phase) * 0.35;
     if (b.y < -10) {
       b.y = height + 10;
@@ -1051,54 +1019,44 @@ function renderOcean() {
   });
 
   swimmingCreatures.forEach(c => {
-    const bounds = getTierDepthBounds(c.tier);
-    const turnMargin = c.size * 0.8;
+    const minY = height * c.spec.depthMinRatio;
+    const maxY = height * c.spec.depthMaxRatio;
+    const turnMargin = c.size * 0.4;
 
-    // 1. 좌우 벽 튕김 및 위치 보정 (완전한 양방향 유턴)
-    if (c.x > width + turnMargin) {
-      c.x = width + turnMargin;
-      c.facingRight = false;
-      const speed = Math.random() * (c.spec.speedMax - c.spec.speedMin) + c.spec.speedMin;
-      c.vx = -Math.abs(speed);
-      c.changeTimer = Math.random() * 150 + 100;
-    } else if (c.x < -turnMargin) {
-      c.x = -turnMargin;
-      c.facingRight = true;
-      const speed = Math.random() * (c.spec.speedMax - c.spec.speedMin) + c.spec.speedMin;
-      c.vx = Math.abs(speed);
-      c.changeTimer = Math.random() * 150 + 100;
+    // 1. 직선 전진 (프레임 독립 이동)
+    c.x += c.vx * timeScale;
+    c.y += c.vy * timeScale;
+
+    // 2. 좌우 벽 굴절/반사 (빛/공처럼 반사: vx 반전)
+    if (c.x > width - turnMargin) {
+      c.x = width - turnMargin;
+      c.vx = -Math.abs(c.vx);
+    } else if (c.x < turnMargin) {
+      c.x = turnMargin;
+      c.vx = Math.abs(c.vx);
     }
 
-    // 2. 화면 안쪽에서만 자연스러운 각도 전환 실행
-    c.changeTimer--;
-    if (c.changeTimer <= 0) {
-      const speed = Math.random() * (c.spec.speedMax - c.spec.speedMin) + c.spec.speedMin;
-      const pitchAngle = (Math.random() - 0.5) * (c.tier >= 2 ? 0.5 : 0.3);
-      
-      const dir = c.facingRight ? 1 : -1;
-      c.vx = Math.abs(Math.cos(pitchAngle) * speed) * dir;
-      c.vy = Math.sin(pitchAngle) * speed;
-      c.changeTimer = Math.random() * 200 + 150;
-    }
-
-    c.x += c.vx;
-    c.y += c.vy;
-
-    // 3. 수심 상/하단 경계 이탈 방지
-    if (c.y < bounds.min) {
-      c.y = bounds.min;
+    // 3. 서식 수심(상하) 한계선 굴절/반사 (vy 반전)
+    if (c.y < minY) {
+      c.y = minY;
       c.vy = Math.abs(c.vy);
-    } else if (c.y > bounds.max) {
-      c.y = bounds.max;
+    } else if (c.y > maxY) {
+      c.y = maxY;
       c.vy = -Math.abs(c.vy);
     }
 
+    // 4. 물고기 렌더링 (진행 방향에 맞춘 회전각 반영)
     ctx.save();
     ctx.translate(c.x, c.y);
 
-    if (!c.facingRight) {
+    const isFacingRight = c.vx >= 0;
+    if (!isFacingRight) {
       ctx.scale(-1, 1);
     }
+
+    // 상하 이동 각도에 맞춘 자연스러운 머리 기울임 (최대 45도 내외)
+    const pitchAngle = Math.atan2(c.vy, Math.abs(c.vx));
+    ctx.rotate(pitchAngle * 0.7);
 
     ctx.globalAlpha = c.bodyAlpha;
 
@@ -1130,16 +1088,14 @@ function renderOcean() {
 
   for (let i = bubbles.length - 1; i >= 0; i--) {
     const b = bubbles[i];
-    b.x += b.vx + Math.sin(b.wobble) * 0.5;
-    b.y += b.vy;
-    b.wobble += 0.1;
+    b.x += (b.vx + Math.sin(b.wobble) * 0.5) * timeScale;
+    b.y += b.vy * timeScale;
+    b.wobble += 0.1 * timeScale;
 
     if (b.reachSurface) {
-      if (b.y < 70) {
-        b.alpha -= 0.025;
-      }
+      if (b.y < 70) b.alpha -= 0.025 * timeScale;
     } else {
-      b.alpha -= 0.009;
+      b.alpha -= 0.009 * timeScale;
     }
 
     if (b.alpha <= 0 || b.y < -30) {
@@ -1163,7 +1119,7 @@ function renderOcean() {
 }
 
 // ====================================================================
-// 2. 툴팁 및 격자판 생성 시스템
+// [툴팁 및 격자판 퍼즐 조작]
 // ====================================================================
 const tooltipEl = document.getElementById('tooltip');
 
@@ -1274,7 +1230,6 @@ function generateSafeBoard() {
 function startNewGame() {
   hideTooltip();
   solvedCountInRound = 0;
-
   if (WORD_DATABASE.length === 0) return;
 
   const shuffled = [...WORD_DATABASE].sort(() => 0.5 - Math.random());
@@ -1353,9 +1308,6 @@ function renderGrid() {
   }
 }
 
-// ====================================================================
-// 3. 드래그 제스처 및 게임 조작 핸들러
-// ====================================================================
 const gridEl = document.getElementById('grid');
 let isDragging = false;
 let startCell = null;
@@ -1495,14 +1447,11 @@ gridEl.addEventListener('touchstart', handleStart, { passive: true });
 window.addEventListener('touchmove', handleMove, { passive: true });
 window.addEventListener('touchend', handleEnd, { passive: true });
 
-// ====================================================================
-// 앱 초기화 및 구글 시트 데이터 로드 시작
-// ====================================================================
 async function initGameApp() {
   const success = await loadSheetData();
   if (success) {
     syncEcosystem();
-    renderOcean();
+    requestAnimationFrame(renderOcean);
     startNewGame();
     updateLayoutUI();
   } else {
