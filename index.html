@@ -533,7 +533,6 @@ let HANJA_DICT = {};
 let WORD_DATABASE = [];
 let ALL_DICT_KEYS = [];
 
-// 따옴표 및 줄바꿈을 완벽히 지원하는 정밀 CSV 파서
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
   return lines.map(line => {
@@ -676,7 +675,6 @@ const TIER_SPECS = [
       "emojis/fish/fish_rank/tier3_whale3.svg"
     ],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier3_FB.svg",
-    fallbackEmojis: ["🐋", "🐳"],
     size: 140, speedMin: 0.22, speedMax: 0.38,
     tintAlpha: 0.35,
     bodyAlpha: 0.95
@@ -691,7 +689,6 @@ const TIER_SPECS = [
       "emojis/fish/fish_rank/tier2_sunfish.svg"
     ],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier2_FB.svg",
-    fallbackEmojis: ["🦈", "🐬"],
     size: 90, speedMin: 0.3, speedMax: 0.55,
     tintAlpha: 0.38,
     bodyAlpha: 0.92
@@ -705,7 +702,6 @@ const TIER_SPECS = [
       "emojis/fish/fish_rank/tier1_squid.svg"
     ],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier1_FB.svg",
-    fallbackEmojis: ["🐢", "🐡", "🐙"],
     size: 52, speedMin: 0.35, speedMax: 0.65,
     tintAlpha: 0.42,
     bodyAlpha: 0.90
@@ -720,7 +716,6 @@ const TIER_SPECS = [
       "emojis/fish/fish_rank/tier0_shrimp.svg"
     ],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier0_FB.svg",
-    fallbackEmojis: ["🐟", "🐠", "🦐"],
     size: 32, speedMin: 0.3, speedMax: 0.5,
     tintAlpha: 0.35,
     bodyAlpha: 0.94
@@ -735,6 +730,9 @@ TIER_SPECS.forEach(spec => {
     img.onload = () => { spec.loadedImages[idx] = img; };
     img.onerror = () => { spec.loadedImages[idx] = null; };
   });
+
+  spec.loadedFallback = new Image();
+  spec.loadedFallback.src = spec.fallbackFile;
 });
 
 let totalSolvedCount = parseInt(localStorage.getItem('hanja_ocean_fish_count') || '0', 10);
@@ -749,7 +747,7 @@ let cellMap = {};
 let activeTooltipTarget = null;
 
 // ====================================================================
-// 샘플 보기 커스텀 숫자 입력 및 화면 상태 전체 백업/복원 시스템
+// 샘플 보기 커스텀 숫자 입력 및 화면 상태 백업/복원
 // ====================================================================
 let isSampleMode = false;
 let backupSolvedCount = 0;
@@ -951,7 +949,6 @@ function syncEcosystem() {
       } else {
         const toRight = Math.random() > 0.5;
         const chosenFileIndex = Math.floor(Math.random() * spec.files.length);
-        const chosenFallbackEmoji = spec.fallbackEmojis[Math.floor(Math.random() * spec.fallbackEmojis.length)];
         const bounds = getTierDepthBounds(spec.tier);
         const totalSpeed = Math.random() * (spec.speedMax - spec.speedMin) + spec.speedMin;
         
@@ -966,7 +963,6 @@ function syncEcosystem() {
           tier: spec.tier,
           spec: spec,
           fileIndex: chosenFileIndex,
-          fallbackEmoji: chosenFallbackEmoji,
           size: spec.size,
           bodyAlpha: spec.bodyAlpha,
           tintAlpha: spec.tintAlpha,
@@ -1097,7 +1093,7 @@ function renderOcean() {
     } else if (c.vx < 0 && c.x < -turnMargin) {
       const speed = Math.random() * (c.spec.speedMax - c.spec.speedMin) + c.spec.speedMin;
       const angle = c.tier >= 2 ? (Math.random() * 0.7 + 0.4) * (Math.random() > 0.5 ? 1 : -1) : (Math.random() - 0.5) * 0.35;
-      c.vx = Math.cos(angle) * speed;
+      c.vx = -Math.cos(angle) * speed;
       c.vy = Math.sin(angle) * speed;
       c.facingRight = true;
     }
@@ -1111,15 +1107,18 @@ function renderOcean() {
 
     ctx.globalAlpha = c.bodyAlpha;
 
-    const currentImg = c.spec.loadedImages ? c.spec.loadedImages[c.fileIndex] : null;
+    const primaryImg = c.spec.loadedImages ? c.spec.loadedImages[c.fileIndex] : null;
+    const targetImg = (primaryImg && primaryImg.complete && primaryImg.naturalWidth > 0) 
+                      ? primaryImg 
+                      : c.spec.loadedFallback;
 
-    if (currentImg && currentImg.complete && currentImg.naturalWidth > 0) {
+    if (targetImg && targetImg.complete && targetImg.naturalWidth > 0) {
       const s = Math.ceil(c.size);
       tintCanvas.width = s;
       tintCanvas.height = s;
       tintCtx.clearRect(0, 0, s, s);
 
-      tintCtx.drawImage(currentImg, 0, 0, s, s);
+      tintCtx.drawImage(targetImg, 0, 0, s, s);
 
       tintCtx.globalCompositeOperation = 'source-atop';
       tintCtx.fillStyle = `rgba(3, 75, 125, ${c.tintAlpha})`;
@@ -1129,11 +1128,6 @@ function renderOcean() {
       tintCtx.fillRect(0, 0, s, s);
 
       ctx.drawImage(tintCanvas, -s / 2, -s / 2, s, s);
-    } else {
-      ctx.font = `${c.size}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText(c.fallbackEmoji, 0, 0);
     }
 
     ctx.restore();
