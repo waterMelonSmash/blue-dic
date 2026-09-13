@@ -683,9 +683,9 @@ const TIER_SPECS = [
     tier: 2,
     name: "상어/돌고래급",
     files: [
+      "emojis/fish/fish_rank/tier2_hammerhead.svg",
       "emojis/fish/fish_rank/tier2_shark.svg",
       "emojis/fish/fish_rank/tier2_shark2.svg",
-      "emojis/fish/fish_rank/tier2_shark3.svg",
       "emojis/fish/fish_rank/tier2_sunfish.svg"
     ],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier2_FB.svg",
@@ -952,12 +952,7 @@ function syncEcosystem() {
         const bounds = getTierDepthBounds(spec.tier);
         const totalSpeed = Math.random() * (spec.speedMax - spec.speedMin) + spec.speedMin;
         
-        let angle;
-        if (spec.tier >= 2) {
-          angle = (Math.random() * 0.7 + 0.5) * (Math.random() > 0.5 ? 1 : -1);
-        } else {
-          angle = (Math.random() - 0.5) * 0.35;
-        }
+        let pitchAngle = (Math.random() - 0.5) * (spec.tier >= 2 ? 0.6 : 0.4);
 
         newCreatures.push({
           tier: spec.tier,
@@ -968,11 +963,10 @@ function syncEcosystem() {
           tintAlpha: spec.tintAlpha,
           x: Math.random() * width,
           y: Math.random() * (bounds.max - bounds.min) + bounds.min,
-          vx: Math.cos(angle) * totalSpeed * (toRight ? 1 : -1),
-          vy: Math.sin(angle) * totalSpeed,
-          maxSpeed: totalSpeed,
+          vx: Math.cos(pitchAngle) * totalSpeed * (toRight ? 1 : -1),
+          vy: Math.sin(pitchAngle) * totalSpeed,
           facingRight: toRight,
-          changeTimer: Math.random() * 250 + 150
+          changeTimer: Math.random() * 200 + 150
         });
       }
     }
@@ -1059,21 +1053,22 @@ function renderOcean() {
   swimmingCreatures.forEach(c => {
     const bounds = getTierDepthBounds(c.tier);
 
+    // 1. 위아래 완만한 유영 각도만 타이머로 갱신 (좌우 진행 방향은 엄격히 유지)
     c.changeTimer--;
     if (c.changeTimer <= 0) {
-      const angle = c.tier >= 2 
-        ? (Math.random() * 0.7 + 0.4) * (Math.random() > 0.5 ? 1 : -1) 
-        : (Math.random() - 0.5) * 0.35;
-      const currentDir = c.vx >= 0 ? 1 : -1;
-      const currentSpeed = Math.random() * (c.spec.speedMax - c.spec.speedMin) + c.spec.speedMin;
-      c.vx = Math.cos(angle) * currentSpeed * currentDir;
-      c.vy = Math.sin(angle) * currentSpeed;
-      c.changeTimer = Math.random() * 250 + 150;
+      const speed = Math.random() * (c.spec.speedMax - c.spec.speedMin) + c.spec.speedMin;
+      const pitchAngle = (Math.random() - 0.5) * (c.tier >= 2 ? 0.6 : 0.4);
+      
+      const dir = c.facingRight ? 1 : -1;
+      c.vx = Math.abs(Math.cos(pitchAngle) * speed) * dir;
+      c.vy = Math.sin(pitchAngle) * speed;
+      c.changeTimer = Math.random() * 200 + 150;
     }
 
     c.x += c.vx;
     c.y += c.vy;
 
+    // 2. 수심 상/하단 경계 이탈 방지
     if (c.y < bounds.min) {
       c.y = bounds.min;
       c.vy = Math.abs(c.vy);
@@ -1082,20 +1077,19 @@ function renderOcean() {
       c.vy = -Math.abs(c.vy);
     }
 
-    const turnMargin = c.size * 0.8;
+    const turnMargin = c.size * 1.2;
 
-    if (c.vx > 0 && c.x > width + turnMargin) {
-      const speed = Math.random() * (c.spec.speedMax - c.spec.speedMin) + c.spec.speedMin;
-      const angle = c.tier >= 2 ? (Math.random() * 0.7 + 0.4) * (Math.random() > 0.5 ? 1 : -1) : (Math.random() - 0.5) * 0.35;
-      c.vx = -Math.cos(angle) * speed;
-      c.vy = Math.sin(angle) * speed;
+    // 3. 좌우 경계 유턴 판정 (확실하게 방향 전환 및 속도 반전)
+    if (c.x > width + turnMargin && c.vx > 0) {
       c.facingRight = false;
-    } else if (c.vx < 0 && c.x < -turnMargin) {
       const speed = Math.random() * (c.spec.speedMax - c.spec.speedMin) + c.spec.speedMin;
-      const angle = c.tier >= 2 ? (Math.random() * 0.7 + 0.4) * (Math.random() > 0.5 ? 1 : -1) : (Math.random() - 0.5) * 0.35;
-      c.vx = -Math.cos(angle) * speed;
-      c.vy = Math.sin(angle) * speed;
+      c.vx = -Math.abs(speed);
+      c.changeTimer = Math.random() * 200 + 150;
+    } else if (c.x < -turnMargin && c.vx < 0) {
       c.facingRight = true;
+      const speed = Math.random() * (c.spec.speedMax - c.spec.speedMin) + c.spec.speedMin;
+      c.vx = Math.abs(speed);
+      c.changeTimer = Math.random() * 200 + 150;
     }
 
     ctx.save();
