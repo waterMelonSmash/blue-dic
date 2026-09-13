@@ -1,0 +1,1426 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>푸른 바다 한자 퍼즐</title>
+
+<script src="data.js"></script>
+
+<style>
+  * { 
+    box-sizing: border-box;
+    -webkit-touch-callout: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    
+    min-height: 100vh;
+    min-height: 100dvh;
+    
+    margin: 0;
+    padding: calc(10px + env(safe-area-inset-top)) 8px calc(14px + env(safe-area-inset-bottom)) 8px;
+    
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
+    position: relative;
+    overflow: hidden;
+    background: radial-gradient(ellipse at 50% 0%, #0369a1 0%, #082f49 55%, #020617 100%);
+    color: #f0fdf4;
+  }
+
+  #oceanCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #settings-btn {
+    position: fixed;
+    top: calc(14px + env(safe-area-inset-top));
+    right: 14px;
+    z-index: 20;
+    width: 36px;
+    height: 36px;
+    background: rgba(15, 23, 42, 0.45);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 17px;
+    color: #bae6fd;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+  #settings-btn:active {
+    transform: scale(0.9) rotate(45deg);
+    background: rgba(14, 116, 144, 0.7);
+  }
+
+  .game-container {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 360px;
+    transition: all 0.3s ease;
+  }
+
+  .ocean-header {
+    display: none;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.45);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    backdrop-filter: blur(10px);
+    padding: 5px 14px;
+    border-radius: 18px;
+    margin-bottom: 8px;
+    box-shadow: 0 4px 18px rgba(2, 132, 199, 0.25);
+  }
+  .ocean-header.visible {
+    display: flex;
+  }
+  .ocean-header .fish-count {
+    color: #38bdf8;
+    font-weight: 800;
+    font-size: 13px;
+    letter-spacing: 0.3px;
+    text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+    transition: color 0.3s ease, text-shadow 0.3s ease;
+  }
+  .ocean-header.sample-mode .fish-count {
+    color: #facc15;
+    text-shadow: 0 0 12px rgba(250, 204, 21, 0.7);
+  }
+  .ocean-header .tier-info {
+    color: #bae6fd;
+    font-size: 10.5px;
+    margin-top: 2px;
+    opacity: 0.9;
+  }
+
+  .quest-container {
+    display: grid;
+    margin-bottom: 8px;
+    justify-content: center;
+    position: relative;
+    transition: all 0.3s ease;
+  }
+
+  .quest-container.mode-small {
+    grid-template-columns: repeat(4, 60px);
+    gap: 8px;
+  }
+  .quest-container.mode-small .quest-card {
+    width: 60px;
+    height: 60px;
+    border-radius: 12px;
+  }
+  .quest-container.mode-small .quest-overlay {
+    font-size: 11px;
+    font-weight: 900;
+    padding: 10px 0 4px 0;
+  }
+
+  .quest-container.mode-medium {
+    grid-template-columns: repeat(2, 108px);
+    gap: 9px;
+  }
+  .quest-container.mode-medium .quest-card {
+    width: 108px;
+    height: 108px;
+    border-radius: 15px;
+  }
+  .quest-container.mode-medium .quest-overlay {
+    font-size: 20px;
+    font-weight: 900;
+    padding: 16px 0 5px 0;
+    letter-spacing: 2px;
+  }
+
+  .quest-container.mode-large {
+    grid-template-columns: repeat(2, 125px);
+    gap: 12px;
+  }
+  .quest-container.mode-large .quest-card {
+    width: 125px;
+    height: 125px;
+    border-radius: 16px;
+  }
+  .quest-container.mode-large .quest-overlay {
+    font-size: 24px;
+    font-weight: 900;
+    padding: 18px 0 6px 0;
+    letter-spacing: 2.5px;
+  }
+
+  .quest-card {
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.45);
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    cursor: pointer;
+    background: rgba(12, 74, 110, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: border-color 0.25s ease, box-shadow 0.25s ease, width 0.25s ease, height 0.25s ease;
+    -webkit-touch-callout: none;
+  }
+
+  .quest-card img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+    pointer-events: none;
+    -webkit-touch-callout: none;
+    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+
+  .quest-card .quest-overlay {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: linear-gradient(to top, rgba(8, 47, 73, 0.95), transparent);
+    color: #ffffff;
+    text-align: center;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95);
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+  }
+
+  .quest-card.active-preview {
+    border-color: #38bdf8;
+    box-shadow: 0 0 20px rgba(56, 189, 248, 0.7);
+    z-index: 10;
+  }
+  .quest-card.active-preview img {
+    transform: scale(1.15);
+  }
+  .quest-card.active-preview .quest-overlay {
+    opacity: 0;
+  }
+
+  .quest-card.found {
+    border-color: #2ecc71;
+    box-shadow: 0 0 18px rgba(46, 204, 113, 0.7);
+    animation: cardSuccessPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes cardSuccessPop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+  }
+
+  #tooltip {
+    display: none;
+    position: fixed;
+    background: #082f49;
+    color: #f0fdf4;
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    padding: 7px 11px;
+    border-radius: 10px;
+    font-size: 11.5px;
+    font-weight: 500;
+    line-height: 1.35;
+    max-width: 190px;
+    text-align: center;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.6);
+    z-index: 9999;
+    pointer-events: none;
+    animation: fadeIn 0.15s ease-out;
+  }
+  #tooltip::after {
+    content: '';
+    position: absolute;
+    border-width: 6px;
+    border-style: solid;
+  }
+  #tooltip.top::after {
+    top: 100%;
+    left: var(--arrow-left, 50%);
+    transform: translateX(-50%);
+    border-color: #082f49 transparent transparent transparent;
+  }
+  #tooltip.bottom::after {
+    bottom: 100%;
+    left: var(--arrow-left, 50%);
+    transform: translateX(-50%);
+    border-color: transparent transparent #082f49 transparent;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(6, 40px);
+    grid-template-rows: repeat(6, 40px);
+    gap: 5px;
+    background: rgba(8, 47, 73, 0.25);
+    backdrop-filter: blur(4px);
+    -webkit-backdrop-filter: blur(4px);
+    border: 1px solid rgba(56, 189, 248, 0.15);
+    padding: 8px;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+    margin-top: 2px;
+  }
+
+  .cell {
+    width: 40px;
+    height: 40px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 9px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.12s;
+    font-size: 17px;
+    font-weight: bold;
+    color: #e2e8f0;
+  }
+  .cell img {
+    width: 28px;
+    height: 28px;
+    object-fit: contain;
+    pointer-events: none;
+    -webkit-touch-callout: none;
+    opacity: 0.95;
+  }
+
+  .cell.selected {
+    background: rgba(249, 115, 22, 0.38);
+    outline: 2px solid #f97316;
+    transform: scale(1.05);
+  }
+
+  .cell.matched {
+    background: rgba(46, 204, 113, 0.45);
+    border-color: #2ecc71;
+    animation: jellyPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes jellyPop {
+    0% { transform: scale(0.9); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+
+  #next-refresh-btn {
+    margin-top: 10px;
+    width: 36px;
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.45;
+    transition: opacity 0.2s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+    -webkit-tap-highlight-color: transparent;
+  }
+  #next-refresh-btn:active {
+    opacity: 0.9;
+    transform: rotate(180deg) scale(0.9);
+  }
+  #next-refresh-btn svg {
+    width: 24px;
+    height: 24px;
+    fill: #ffffff;
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.5));
+  }
+
+  #settings-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    background: rgba(2, 6, 23, 0.6);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  #settings-modal.active {
+    display: flex;
+  }
+
+  .modal-content {
+    background: rgba(15, 23, 42, 0.9);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 20px;
+    padding: 20px 18px;
+    width: 85%;
+    max-width: 280px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    animation: popIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  @keyframes popIn {
+    from { transform: scale(0.85); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+  }
+
+  .modal-title {
+    font-size: 14px;
+    font-weight: bold;
+    color: #64ffda;
+    text-align: center;
+    margin-bottom: 2px;
+  }
+
+  .mode-select-label {
+    font-size: 11.5px;
+    color: #93c5fd;
+    margin-bottom: -4px;
+    text-align: center;
+  }
+  .size-btn-group {
+    display: flex;
+    gap: 6px;
+    width: 100%;
+  }
+  .size-btn {
+    flex: 1;
+    padding: 9px 0;
+    background: rgba(14, 116, 144, 0.3);
+    color: #bae6fd;
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.15s ease;
+  }
+  .size-btn:active {
+    transform: scale(0.96);
+  }
+  .size-btn.active {
+    background: rgba(56, 189, 248, 0.38);
+    border-color: #38bdf8;
+    color: #ffffff;
+    box-shadow: 0 0 10px rgba(56, 189, 248, 0.4);
+  }
+
+  .modal-btn {
+    padding: 11px;
+    background: rgba(14, 116, 144, 0.4);
+    color: #e0f2fe;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background 0.15s, transform 0.1s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  .modal-btn:active {
+    transform: scale(0.97);
+    background: rgba(14, 116, 144, 0.7);
+  }
+  .modal-btn.sample {
+    background: rgba(245, 158, 11, 0.3);
+    border-color: rgba(245, 158, 11, 0.5);
+    color: #fef08a;
+  }
+  .modal-btn.sample.active {
+    background: rgba(239, 68, 68, 0.3);
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #fca5a5;
+  }
+  .modal-btn.reset {
+    background: rgba(239, 68, 68, 0.25);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+  }
+  .modal-btn.close {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+    margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+
+  <canvas id="oceanCanvas"></canvas>
+
+  <div id="settings-btn" onclick="openSettings()">⚙️</div>
+
+  <div class="game-container">
+    <div class="ocean-header" id="oceanHeader">
+      <div class="fish-count" id="fishTotalText">🌊 누적 달성: <span id="fishTotalDisplay">0</span>문제</div>
+      <div class="tier-info" id="tierInfoDisplay">생태계: 바다가 조용합니다</div>
+    </div>
+
+    <div class="quest-container" id="questList"></div>
+    <div id="tooltip"></div>
+    <div id="grid"></div>
+
+    <div id="next-refresh-btn" onclick="startNewGame()" title="다음 문제로 넘어가기">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0 0 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 0 0 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+      </svg>
+    </div>
+  </div>
+
+  <div id="settings-modal" onclick="handleModalBgClick(event)">
+    <div class="modal-content">
+      <div class="modal-title">⚙️ 게임 및 바다 설정</div>
+      
+      <div class="mode-select-label">화면 레이아웃 모드</div>
+      <div class="size-btn-group">
+        <button class="size-btn" id="btn-mode-small" onclick="setGameMode('small')">소</button>
+        <button class="size-btn" id="btn-mode-medium" onclick="setGameMode('medium')">중</button>
+        <button class="size-btn" id="btn-mode-large" onclick="setGameMode('large')">대</button>
+      </div>
+
+      <button class="modal-btn sample" id="sampleBtn" onclick="handleSampleClick()">샘플 보기</button>
+      <button class="modal-btn reset" onclick="execAction(resetOcean)">바다 초기화</button>
+      <button class="modal-btn close" onclick="closeSettings()">닫기</button>
+    </div>
+  </div>
+
+<script>
+window.addEventListener('contextmenu', (e) => e.preventDefault());
+document.addEventListener('selectstart', (e) => e.preventDefault());
+
+function triggerVibration(pattern) {
+  if (navigator.vibrate) {
+    try { navigator.vibrate(pattern); } catch (err) {}
+  }
+}
+
+// ====================================================================
+// [ 소 / 중 / 대 ] 레이아웃 모드 제어
+// ====================================================================
+let currentMode = localStorage.getItem('hanja_ocean_layout_mode') || 'medium';
+
+function updateLayoutUI() {
+  const header = document.getElementById('oceanHeader');
+  const questList = document.getElementById('questList');
+
+  questList.classList.remove('mode-small', 'mode-medium', 'mode-large');
+  document.querySelectorAll('.size-btn').forEach(btn => btn.classList.remove('active'));
+
+  const activeBtn = document.getElementById(`btn-mode-${currentMode}`);
+  if (activeBtn) activeBtn.classList.add('active');
+
+  if (currentMode === 'small') {
+    header.classList.add('visible');
+    questList.classList.add('mode-small');
+  } else if (currentMode === 'medium') {
+    header.classList.add('visible');
+    questList.classList.add('mode-medium');
+  } else if (currentMode === 'large') {
+    header.classList.remove('visible');
+    questList.classList.add('mode-large');
+  }
+}
+
+function setGameMode(mode) {
+  currentMode = mode;
+  localStorage.setItem('hanja_ocean_layout_mode', mode);
+  updateLayoutUI();
+}
+
+function openSettings() {
+  document.getElementById('settings-modal').classList.add('active');
+}
+function closeSettings() {
+  document.getElementById('settings-modal').classList.remove('active');
+}
+function handleModalBgClick(e) {
+  if (e.target.id === 'settings-modal') closeSettings();
+}
+function execAction(fn) {
+  closeSettings();
+  fn();
+}
+
+// ====================================================================
+// 1. 수중 원근감 & 오프스크린 심해 렌더러
+// ====================================================================
+const canvas = document.getElementById('oceanCanvas');
+const ctx = canvas.getContext('2d');
+let width, height;
+
+function resizeCanvas() {
+  width = canvas.width = window.innerWidth;
+  height = canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const tintCanvas = document.createElement('canvas');
+const tintCtx = tintCanvas.getContext('2d');
+
+const TIER_SPECS = [
+  {
+    tier: 3,
+    name: "대왕고래급",
+    files: [
+      "emojis/fish rank/tier3/whale1.svg",
+      "emojis/fish rank/tier3/whale2.svg",
+      "emojis/fish rank/tier3/whale3.svg"
+    ],
+    fallbackEmojis: ["🐋", "🐳"],
+    size: 140, speedMin: 0.35, speedMax: 0.53,
+    tintAlpha: 0.35,
+    bodyAlpha: 0.95
+  },
+  {
+    tier: 2,
+    name: "상어/돌고래급",
+    files: [
+      "emojis/fish rank/tier2/shark1.svg",
+      "emojis/fish rank/tier2/shark.svg",
+      "emojis/fish rank/tier2/sunfish.svg"
+    ],
+    fallbackEmojis: ["🦈", "🐬"],
+    size: 90, speedMin: 0.35, speedMax: 0.6,
+    tintAlpha: 0.38,
+    bodyAlpha: 0.92
+  },
+  {
+    tier: 1,
+    name: "거북/가오리급",
+    files: [
+      "emojis/fish rank/tier1/seaturtle.svg",
+      "emojis/fish rank/tier1/squid.svg",
+      "emojis/fish rank/tier1/jellyfish.svg"
+    ],
+    fallbackEmojis: ["🐢", "🐡", "🐙"],
+    size: 52, speedMin: 0.43, speedMax: 0.7,
+    tintAlpha: 0.42,
+    bodyAlpha: 0.90
+  },
+  {
+    tier: 0,
+    name: "작은 물고기급",
+    files: [
+      "emojis/fish rank/tier0/clown_fish.svg",
+      "emojis/fish rank/tier0/fish1.svg",
+      "emojis/fish rank/tier0/fish2.svg",
+      "emojis/fish rank/tier0/shrimp.svg"
+    ],
+    fallbackEmojis: ["🐟", "🐠", "🦐", "🦑"],
+    size: 32, speedMin: 0.5, speedMax: 0.85,
+    tintAlpha: 0.35,
+    bodyAlpha: 0.94
+  }
+];
+
+TIER_SPECS.forEach(spec => {
+  spec.loadedImages = [];
+  spec.files.forEach((filePath, idx) => {
+    const img = new Image();
+    img.src = filePath;
+    img.onload = () => { spec.loadedImages[idx] = img; };
+    img.onerror = () => { spec.loadedImages[idx] = null; };
+  });
+});
+
+let totalSolvedCount = parseInt(localStorage.getItem('hanja_ocean_fish_count') || '0', 10);
+let swimmingCreatures = [];
+let bubbles = [];
+
+const GRID_SIZE = 6;
+let currentQuestions = [];
+let solvedCountInRound = 0;
+let board = [];
+let cellMap = {};
+let activeTooltipTarget = null;
+
+const ALL_DICT_KEYS = Object.keys(HANJA_DICT);
+
+// ====================================================================
+// 샘플 보기 커스텀 숫자 입력 및 화면 상태 전체 백업/복원 시스템
+// ====================================================================
+let isSampleMode = false;
+let backupSolvedCount = 0;
+let backupQuestions = null;
+let backupBoard = null;
+let backupSolvedInRound = 0;
+
+function handleSampleClick() {
+  const sampleBtn = document.getElementById('sampleBtn');
+  const header = document.getElementById('oceanHeader');
+
+  if (!isSampleMode) {
+    const inputVal = prompt("샘플로 보고 싶은 문제 개수를 입력하세요:", "9999");
+    if (inputVal === null) return;
+
+    const targetNum = parseInt(inputVal.trim(), 10);
+    if (isNaN(targetNum) || targetNum < 0) {
+      alert("올바른 숫자를 입력해주세요.");
+      return;
+    }
+
+    isSampleMode = true;
+    backupSolvedCount = totalSolvedCount;
+    backupQuestions = JSON.parse(JSON.stringify(currentQuestions));
+    backupBoard = JSON.parse(JSON.stringify(board));
+    backupSolvedInRound = solvedCountInRound;
+
+    totalSolvedCount = targetNum;
+
+    header.classList.add('sample-mode');
+    sampleBtn.classList.add('active');
+    sampleBtn.innerText = "샘플 보기 중지 (원래대로)";
+
+    syncEcosystem();
+    closeSettings();
+  } else {
+    isSampleMode = false;
+    totalSolvedCount = backupSolvedCount;
+
+    if (backupQuestions && backupBoard) {
+      currentQuestions = JSON.parse(JSON.stringify(backupQuestions));
+      board = JSON.parse(JSON.stringify(backupBoard));
+      solvedCountInRound = backupSolvedInRound;
+      
+      renderRestoredQuestions();
+      renderGrid();
+      restoreMatchedCells();
+    }
+
+    header.classList.remove('sample-mode');
+    sampleBtn.classList.remove('active');
+    sampleBtn.innerText = "샘플 보기";
+
+    syncEcosystem();
+    closeSettings();
+  }
+}
+
+function renderRestoredQuestions() {
+  const questListEl = document.getElementById('questList');
+  questListEl.innerHTML = '';
+  currentQuestions.forEach(q => {
+    const card = document.createElement('div');
+    card.className = 'quest-card' + (q.isFound ? ' found' : '');
+    card.id = `quest-${q.id}`;
+
+    card.innerHTML = `
+      <img src="${q.file}" alt="${q.hanja}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+      <div style="display:none; width:100%; height:100%; align-items:center; justify-content:center; font-size:32px; margin-bottom:6px;">${q.fallback}</div>
+      <div class="quest-overlay">${q.hanja}</div>
+    `;
+
+    const handlePressStart = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      card.classList.add('active-preview');
+      showTooltip(card, q.desc);
+    };
+
+    const handlePressEnd = (e) => {
+      e.preventDefault();
+      card.classList.remove('active-preview');
+      hideTooltip();
+    };
+
+    card.addEventListener('mousedown', handlePressStart);
+    card.addEventListener('mouseup', handlePressEnd);
+    card.addEventListener('mouseleave', handlePressEnd);
+    card.addEventListener('touchstart', handlePressStart, { passive: false });
+    card.addEventListener('touchend', handlePressEnd, { passive: false });
+    card.addEventListener('touchcancel', handlePressEnd, { passive: false });
+
+    questListEl.appendChild(card);
+  });
+}
+
+function restoreMatchedCells() {
+  currentQuestions.forEach(q => {
+    if (q.isFound) {
+      const chars = q.hanja.split('');
+      for (let r = 0; r < GRID_SIZE; r++) {
+        for (let c = 0; c < GRID_SIZE; c++) {
+          if (chars.includes(board[r][c])) {
+            const cell = cellMap[`${r},${c}`];
+            if (cell) cell.classList.add('matched');
+          }
+        }
+      }
+    }
+  });
+}
+
+function spawnBubbles(x, y, count, isBig = false, reachSurface = false) {
+  for (let i = 0; i < count; i++) {
+    bubbles.push({
+      x: x + (Math.random() - 0.5) * (isBig ? 50 : 25),
+      y: y + (Math.random() - 0.5) * (isBig ? 30 : 15),
+      vx: (Math.random() - 0.5) * (isBig ? 3.5 : 2),
+      vy: -(Math.random() * (isBig ? 4.5 : 2.5) + (isBig ? 3.0 : 1.8)),
+      radius: Math.random() * (isBig ? 8.5 : 4.5) + (isBig ? 3.5 : 2),
+      alpha: Math.random() * 0.35 + 0.55,
+      wobble: Math.random() * Math.PI * 2,
+      reachSurface: reachSurface
+    });
+  }
+}
+
+window.addEventListener('touchstart', (e) => {
+  if (e.target.closest('#grid') || e.target.closest('.quest-card') || e.target.closest('#settings-btn') || e.target.closest('#settings-modal') || e.target.closest('#next-refresh-btn')) {
+    return;
+  }
+  e.preventDefault();
+  const touch = e.touches[0];
+  spawnBubbles(touch.clientX, touch.clientY, Math.floor(Math.random() * 3) + 5, false, false);
+}, { passive: false });
+
+window.addEventListener('mousedown', (e) => {
+  if (e.target.closest('#grid') || e.target.closest('.quest-card') || e.target.closest('#settings-btn') || e.target.closest('#settings-modal') || e.target.closest('#next-refresh-btn')) {
+    return;
+  }
+  spawnBubbles(e.clientX, e.clientY, Math.floor(Math.random() * 3) + 5, false, false);
+});
+
+function calculateCreatureCounts(n) {
+  const thousands = Math.floor(n / 1000);
+  const hundreds = Math.floor((n % 1000) / 100);
+  const tens = Math.floor((n % 100) / 10);
+  const ones = n % 10;
+  return { 3: thousands, 2: hundreds, 1: tens, 0: ones };
+}
+
+function updateTierText() {
+  const textContainer = document.getElementById('fishTotalText');
+  const tierEl = document.getElementById('tierInfoDisplay');
+
+  if (isSampleMode) {
+    textContainer.innerHTML = `✨ 샘플 누적 달성: <span id="fishTotalDisplay">${totalSolvedCount}</span>문제`;
+  } else {
+    textContainer.innerHTML = `🌊 누적 달성: <span id="fishTotalDisplay">${totalSolvedCount}</span>문제`;
+  }
+
+  if (totalSolvedCount === 0) {
+    tierEl.innerText = "🌊 생태계: 바다가 조용합니다 (단어를 맞춰 생물을 불러오세요)";
+    return;
+  }
+
+  const counts = calculateCreatureCounts(totalSolvedCount);
+  let summary = [];
+  if (counts[3] > 0) summary.push(`🐋 고래 ${counts[3]}`);
+  if (counts[2] > 0) summary.push(`🐬 상어 ${counts[2]}`);
+  if (counts[1] > 0) summary.push(`🐢 거북 ${counts[1]}`);
+  if (counts[0] > 0) summary.push(`🐟 물고기 ${counts[0]}`);
+
+  const nextTierNeeded = 10 - (totalSolvedCount % 10);
+  tierEl.innerText = `현재 [${summary.join(' | ')}] (다음 합체까지 ${nextTierNeeded}문제)`;
+}
+
+// 티어별 수심 범위 설정
+function getTierDepthBounds(tier) {
+  if (tier >= 2) {
+    return { min: height * 0.08, max: height * 0.92 };
+  } else if (tier === 1) {
+    return { min: height * 0.12, max: height * 0.50 };
+  } else {
+    return { min: height * 0.05, max: height * 0.32 };
+  }
+}
+
+function syncEcosystem() {
+  const counts = calculateCreatureCounts(totalSolvedCount);
+  const newCreatures = [];
+
+  TIER_SPECS.forEach(spec => {
+    const requiredCount = counts[spec.tier];
+    const existing = swimmingCreatures.filter(c => c.tier === spec.tier);
+
+    for (let i = 0; i < requiredCount; i++) {
+      if (existing[i]) {
+        newCreatures.push(existing[i]);
+      } else {
+        const toRight = Math.random() > 0.5;
+        const chosenFileIndex = Math.floor(Math.random() * spec.files.length);
+        const chosenFallbackEmoji = spec.fallbackEmojis[Math.floor(Math.random() * spec.fallbackEmojis.length)];
+        const bounds = getTierDepthBounds(spec.tier);
+        const speed = Math.random() * (spec.speedMax - spec.speedMin) + spec.speedMin;
+        
+        // 고티어는 상하 대각선 각도를 부여, 저티어는 완만한 각도
+        let angle;
+        if (spec.tier >= 2) {
+          angle = (Math.random() * 0.5 + 0.3) * (Math.random() > 0.5 ? 1 : -1);
+        } else {
+          angle = (Math.random() - 0.5) * 0.25;
+        }
+
+        newCreatures.push({
+          tier: spec.tier,
+          spec: spec,
+          fileIndex: chosenFileIndex,
+          fallbackEmoji: chosenFallbackEmoji,
+          size: spec.size,
+          bodyAlpha: spec.bodyAlpha,
+          tintAlpha: spec.tintAlpha,
+          x: Math.random() * width,
+          y: Math.random() * (bounds.max - bounds.min) + bounds.min,
+          vx: Math.cos(angle) * speed * (toRight ? 1 : -1),
+          vy: Math.sin(angle) * speed,
+          speed: speed,
+          facingRight: toRight
+        });
+      }
+    }
+  });
+
+  newCreatures.sort((a, b) => a.tier - b.tier);
+  swimmingCreatures = newCreatures;
+  updateTierText();
+}
+
+function onCorrectWord(sourceX, sourceY) {
+  totalSolvedCount++;
+  if (!isSampleMode) {
+    localStorage.setItem('hanja_ocean_fish_count', totalSolvedCount);
+  }
+
+  syncEcosystem();
+
+  const isMerging = (Math.floor(totalSolvedCount / 10) > Math.floor((totalSolvedCount - 1) / 10)) ||
+                    (Math.floor(totalSolvedCount / 100) > Math.floor((totalSolvedCount - 1) / 100)) ||
+                    (Math.floor(totalSolvedCount / 1000) > Math.floor((totalSolvedCount - 1) / 1000));
+
+  if (isMerging) {
+    triggerVibration([70, 50, 120]);
+    spawnBubbles(sourceX, sourceY, 80, true, true);
+  } else {
+    triggerVibration(40);
+    spawnBubbles(sourceX, sourceY, 28, false, false);
+  }
+}
+
+function resetOcean() {
+  if (confirm("바다의 모든 생물과 현재 퍼즐 진행 상황을 완전히 초기화할까요?")) {
+    if (isSampleMode) {
+      isSampleMode = false;
+      document.getElementById('oceanHeader').classList.remove('sample-mode');
+      const sBtn = document.getElementById('sampleBtn');
+      sBtn.classList.remove('active');
+      sBtn.innerText = "샘플 보기";
+    }
+    totalSolvedCount = 0;
+    localStorage.removeItem('hanja_ocean_fish_count');
+    bubbles = [];
+    syncEcosystem();
+    startNewGame();
+  }
+}
+
+const ambientBubbles = Array.from({ length: 24 }, () => ({
+  x: Math.random() * window.innerWidth,
+  y: Math.random() * window.innerHeight,
+  radius: Math.random() * 3.5 + 1.5,
+  speed: Math.random() * 0.6 + 0.3,
+  alpha: Math.random() * 0.3 + 0.1,
+  phase: Math.random() * Math.PI * 2
+}));
+
+function renderOcean() {
+  ctx.clearRect(0, 0, width, height);
+
+  ctx.save();
+  const rayGrad = ctx.createLinearGradient(width * 0.5, 0, width * 0.5, height * 0.65);
+  rayGrad.addColorStop(0, 'rgba(56, 189, 248, 0.12)');
+  rayGrad.addColorStop(0.45, 'rgba(3, 105, 161, 0.04)');
+  rayGrad.addColorStop(1, 'rgba(2, 6, 23, 0)');
+  ctx.fillStyle = rayGrad;
+  ctx.fillRect(0, 0, width, height);
+  ctx.restore();
+
+  ambientBubbles.forEach(b => {
+    b.y -= b.speed;
+    b.phase += 0.02;
+    b.x += Math.sin(b.phase) * 0.35;
+    if (b.y < -10) {
+      b.y = height + 10;
+      b.x = Math.random() * width;
+    }
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(186, 230, 253, ${b.alpha * 0.65})`;
+    ctx.fill();
+  });
+
+  // 도중에 꺾이지 않고 화면 끝에 도달할 때까지 한 방향으로 쭉 직진하는 유영 로직
+  swimmingCreatures.forEach(c => {
+    const bounds = getTierDepthBounds(c.tier);
+
+    c.x += c.vx;
+    c.y += c.vy;
+
+    // 상하 수심 바닥/천장에 닿으면 반사
+    if (c.y < bounds.min) {
+      c.y = bounds.min;
+      c.vy = -c.vy;
+    } else if (c.y > bounds.max) {
+      c.y = bounds.max;
+      c.vy = -c.vy;
+    }
+
+    const turnMargin = c.size * 0.8;
+
+    // 좌우 화면 끝(벽)에 도달했을 때만 방향을 반대로 꺾고 새로운 대각선 각도 부여
+    if (c.vx > 0 && c.x > width + turnMargin) {
+      const speed = Math.random() * (c.spec.speedMax - c.spec.speedMin) + c.spec.speedMin;
+      const angle = c.tier >= 2 ? (Math.random() * 0.5 + 0.3) * (Math.random() > 0.5 ? 1 : -1) : (Math.random() - 0.5) * 0.25;
+      c.vx = -Math.cos(angle) * speed;
+      c.vy = Math.sin(angle) * speed;
+      c.facingRight = false;
+    } else if (c.vx < 0 && c.x < -turnMargin) {
+      const speed = Math.random() * (c.spec.speedMax - c.spec.speedMin) + c.spec.speedMin;
+      const angle = c.tier >= 2 ? (Math.random() * 0.5 + 0.3) * (Math.random() > 0.5 ? 1 : -1) : (Math.random() - 0.5) * 0.25;
+      c.vx = Math.cos(angle) * speed;
+      c.vy = Math.sin(angle) * speed;
+      c.facingRight = true;
+    }
+
+    ctx.save();
+    ctx.translate(c.x, c.y);
+
+    if (!c.facingRight) {
+      ctx.scale(-1, 1);
+    }
+
+    ctx.globalAlpha = c.bodyAlpha;
+
+    const currentImg = c.spec.loadedImages ? c.spec.loadedImages[c.fileIndex] : null;
+
+    if (currentImg && currentImg.complete && currentImg.naturalWidth > 0) {
+      const s = Math.ceil(c.size);
+      tintCanvas.width = s;
+      tintCanvas.height = s;
+      tintCtx.clearRect(0, 0, s, s);
+
+      tintCtx.drawImage(currentImg, 0, 0, s, s);
+
+      tintCtx.globalCompositeOperation = 'source-atop';
+      tintCtx.fillStyle = `rgba(3, 75, 125, ${c.tintAlpha})`;
+      tintCtx.fillRect(0, 0, s, s);
+
+      tintCtx.fillStyle = `rgba(1, 30, 60, ${c.tintAlpha * 0.5})`;
+      tintCtx.fillRect(0, 0, s, s);
+
+      ctx.drawImage(tintCanvas, -s / 2, -s / 2, s, s);
+    } else {
+      ctx.font = `${c.size}px "Segoe UI Emoji", "Apple Color Emoji", sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(c.fallbackEmoji, 0, 0);
+    }
+
+    ctx.restore();
+  });
+
+  for (let i = bubbles.length - 1; i >= 0; i--) {
+    const b = bubbles[i];
+    b.x += b.vx + Math.sin(b.wobble) * 0.5;
+    b.y += b.vy;
+    b.wobble += 0.1;
+
+    if (b.reachSurface) {
+      if (b.y < 70) {
+        b.alpha -= 0.025;
+      }
+    } else {
+      b.alpha -= 0.009;
+    }
+
+    if (b.alpha <= 0 || b.y < -30) {
+      bubbles.splice(i, 1);
+      continue;
+    }
+
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(224, 242, 254, ${b.alpha})`;
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(b.x - b.radius * 0.3, b.y - b.radius * 0.3, b.radius * 0.25, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 255, 255, ${b.alpha * 0.85})`;
+    ctx.fill();
+  }
+
+  requestAnimationFrame(renderOcean);
+}
+
+// ====================================================================
+// 2. 툴팁 및 안전 격자판 생성
+// ====================================================================
+const tooltipEl = document.getElementById('tooltip');
+
+function showTooltip(targetEl, text) {
+  if (!text) return;
+  activeTooltipTarget = targetEl;
+  tooltipEl.innerText = text;
+  tooltipEl.style.display = 'block';
+
+  const rect = targetEl.getBoundingClientRect();
+  const tooltipWidth = tooltipEl.offsetWidth;
+  const tooltipHeight = tooltipEl.offsetHeight;
+
+  const showOnTop = rect.bottom + tooltipHeight + 12 > window.innerHeight;
+  tooltipEl.className = showOnTop ? 'top' : 'bottom';
+
+  let top = showOnTop ? (rect.top - tooltipHeight - 8) : (rect.bottom + 8);
+  const targetCenterX = rect.left + rect.width / 2;
+  let left = targetCenterX - tooltipWidth / 2;
+
+  if (left < 10) left = 10;
+  else if (left + tooltipWidth > window.innerWidth - 10) left = window.innerWidth - tooltipWidth - 10;
+
+  tooltipEl.style.setProperty('--arrow-left', `${targetCenterX - left}px`);
+  tooltipEl.style.top = `${top}px`;
+  tooltipEl.style.left = `${left}px`;
+}
+
+function hideTooltip() {
+  tooltipEl.style.display = 'none';
+  activeTooltipTarget = null;
+}
+
+document.addEventListener('pointerdown', (e) => {
+  if (!e.target.closest('.quest-card') && !e.target.closest('.cell')) {
+    hideTooltip();
+  }
+});
+
+function generateSafeBoard() {
+  const directions = [[0, 1], [1, 0], [1, 1], [-1, 1], [0, -1], [1, -1]];
+  const sortedWords = [...currentQuestions].sort((a, b) => b.hanja.length - a.hanja.length);
+
+  const answerChars = new Set(sortedWords.flatMap(q => q.hanja.split('')));
+  let safeFillKeys = ALL_DICT_KEYS.filter(char => !answerChars.has(char));
+  if (safeFillKeys.length === 0) safeFillKeys = ALL_DICT_KEYS;
+
+  for (let layoutAttempt = 0; layoutAttempt < 100; layoutAttempt++) {
+    let testBoard = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(null));
+    let allPlaced = true;
+
+    for (const q of sortedWords) {
+      let placed = false;
+      let tries = 80;
+      while (!placed && tries-- > 0) {
+        const [dr, dc] = directions[Math.floor(Math.random() * directions.length)];
+        const r = Math.floor(Math.random() * GRID_SIZE);
+        const c = Math.floor(Math.random() * GRID_SIZE);
+        const endR = r + dr * (q.hanja.length - 1);
+        const endC = c + dc * (q.hanja.length - 1);
+
+        if (endR >= 0 && endR < GRID_SIZE && endC >= 0 && endC < GRID_SIZE) {
+          let canPlace = true;
+          for (let i = 0; i < q.hanja.length; i++) {
+            if (testBoard[r + dr * i][c + dc * i] !== null) {
+              canPlace = false;
+              break;
+            }
+          }
+          if (canPlace) {
+            for (let i = 0; i < q.hanja.length; i++) {
+              testBoard[r + dr * i][c + dc * i] = q.hanja[i];
+            }
+            placed = true;
+          }
+        }
+      }
+      if (!placed) { allPlaced = false; break; }
+    }
+
+    if (!allPlaced) continue;
+
+    for (let r = 0; r < GRID_SIZE; r++) {
+      for (let c = 0; c < GRID_SIZE; c++) {
+        if (testBoard[r][c] === null) {
+          testBoard[r][c] = safeFillKeys[Math.floor(Math.random() * safeFillKeys.length)];
+        }
+      }
+    }
+
+    board = testBoard;
+    return;
+  }
+
+  let fallbackBoard = Array.from({ length: GRID_SIZE }, () => 
+    Array.from({ length: GRID_SIZE }, () => safeFillKeys[Math.floor(Math.random() * safeFillKeys.length)])
+  );
+  sortedWords.forEach((q, rowIdx) => {
+    if (rowIdx < GRID_SIZE) {
+      for (let i = 0; i < q.hanja.length && i < GRID_SIZE; i++) {
+        fallbackBoard[rowIdx][i] = q.hanja[i];
+      }
+    }
+  });
+  board = fallbackBoard;
+}
+
+function startNewGame() {
+  hideTooltip();
+  solvedCountInRound = 0;
+  const shuffled = [...WORD_DATABASE].sort(() => 0.5 - Math.random());
+  currentQuestions = shuffled.slice(0, 4).map((q, idx) => ({ ...q, id: `q_${idx}`, isFound: false }));
+
+  const questListEl = document.getElementById('questList');
+  questListEl.innerHTML = '';
+  currentQuestions.forEach(q => {
+    const card = document.createElement('div');
+    card.className = 'quest-card';
+    card.id = `quest-${q.id}`;
+
+    card.innerHTML = `
+      <img src="${q.file}" alt="${q.hanja}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+      <div style="display:none; width:100%; height:100%; align-items:center; justify-content:center; font-size:32px; margin-bottom:6px;">${q.fallback}</div>
+      <div class="quest-overlay">${q.hanja}</div>
+    `;
+
+    const handlePressStart = (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      card.classList.add('active-preview');
+      showTooltip(card, q.desc);
+    };
+
+    const handlePressEnd = (e) => {
+      e.preventDefault();
+      card.classList.remove('active-preview');
+      hideTooltip();
+    };
+
+    card.addEventListener('mousedown', handlePressStart);
+    card.addEventListener('mouseup', handlePressEnd);
+    card.addEventListener('mouseleave', handlePressEnd);
+    card.addEventListener('touchstart', handlePressStart, { passive: false });
+    card.addEventListener('touchend', handlePressEnd, { passive: false });
+    card.addEventListener('touchcancel', handlePressEnd, { passive: false });
+
+    questListEl.appendChild(card);
+  });
+
+  generateSafeBoard();
+  renderGrid();
+  updateLayoutUI();
+}
+
+function renderGrid() {
+  const gridEl = document.getElementById('grid');
+  gridEl.innerHTML = '';
+  cellMap = {};
+
+  for (let r = 0; r < GRID_SIZE; r++) {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      const char = board[r][c];
+      const charData = HANJA_DICT[char] || { file: "", fallback: char, desc: "설명 없음" };
+
+      const cell = document.createElement('div');
+      cell.className = 'cell';
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+      cell.dataset.char = char;
+      cell.dataset.desc = charData.desc;
+
+      const imgEl = document.createElement('img');
+      imgEl.src = charData.file;
+      imgEl.alt = char;
+      imgEl.onerror = function() {
+        this.style.display = 'none';
+        cell.innerText = charData.fallback || char;
+      };
+
+      cell.appendChild(imgEl);
+      gridEl.appendChild(cell);
+      cellMap[`${r},${c}`] = cell;
+    }
+  }
+}
+
+// ====================================================================
+// 3. 드래그 제스처 및 게임 조작 핸들러
+// ====================================================================
+const gridEl = document.getElementById('grid');
+let isDragging = false;
+let startCell = null;
+let startX = 0, startY = 0;
+let hasMovedFar = false;
+let currentLineCells = [];
+
+function getCellFromPoint(x, y) {
+  const el = document.elementFromPoint(x, y);
+  if (!el) return null;
+  return el.classList.contains('cell') ? el : el.closest('.cell');
+}
+
+function clearHighlight() {
+  currentLineCells.forEach(cell => cell.classList.remove('selected'));
+  currentLineCells = [];
+}
+
+function calculateStraightLine(start, current) {
+  const r1 = parseInt(start.dataset.row);
+  const c1 = parseInt(start.dataset.col);
+  const r2 = parseInt(current.dataset.row);
+  const c2 = parseInt(current.dataset.col);
+
+  const dr = r2 - r1;
+  const dc = c2 - c1;
+
+  if (dr === 0 && dc === 0) return [start];
+  const absDr = Math.abs(dr);
+  const absDc = Math.abs(dc);
+  if (dr !== 0 && dc !== 0 && absDr !== absDc) return currentLineCells;
+
+  const stepR = dr === 0 ? 0 : dr / absDr;
+  const stepC = dc === 0 ? 0 : dc / absDc;
+  const distance = Math.max(absDr, absDc);
+
+  const line = [];
+  for (let i = 0; i <= distance; i++) {
+    const curR = r1 + stepR * i;
+    const curC = c1 + stepC * i;
+    const target = cellMap[`${curR},${curC}`];
+    if (target) line.push(target);
+  }
+  return line;
+}
+
+function handleStart(e) {
+  const pt = e.touches ? e.touches[0] : e;
+  const cell = getCellFromPoint(pt.clientX, pt.clientY);
+  if (!cell) return;
+
+  isDragging = true;
+  hasMovedFar = false;
+  startCell = cell;
+  startX = pt.clientX;
+  startY = pt.clientY;
+
+  clearHighlight();
+  currentLineCells = [cell];
+  cell.classList.add('selected');
+}
+
+function handleMove(e) {
+  if (!isDragging || !startCell) return;
+  const pt = e.touches ? e.touches[0] : e;
+
+  const dist = Math.hypot(pt.clientX - startX, pt.clientY - startY);
+  if (dist > 8) {
+    if (!hasMovedFar) {
+      hideTooltip();
+      hasMovedFar = true;
+    }
+  }
+
+  const hoverCell = getCellFromPoint(pt.clientX, pt.clientY);
+  if (!hoverCell) return;
+
+  const newLine = calculateStraightLine(startCell, hoverCell);
+  if (newLine && newLine.length > 0) {
+    currentLineCells.forEach(c => c.classList.remove('selected'));
+    currentLineCells = newLine;
+    currentLineCells.forEach(c => c.classList.add('selected'));
+  }
+}
+
+function handleEnd() {
+  if (!isDragging) return;
+  isDragging = false;
+
+  if (!hasMovedFar && startCell) {
+    startCell.classList.remove('selected');
+    showTooltip(startCell, startCell.dataset.desc);
+    currentLineCells = [];
+    startCell = null;
+    return;
+  }
+
+  const draggedChars = currentLineCells.map(c => c.dataset.char).join('');
+  const matched = currentQuestions.find(q => q.hanja === draggedChars && !q.isFound);
+
+  if (matched) {
+    matched.isFound = true;
+    solvedCountInRound++;
+
+    currentLineCells.forEach(c => {
+      c.classList.remove('selected');
+      c.classList.add('matched');
+    });
+
+    const targetCard = document.getElementById(`quest-${matched.id}`);
+    if (targetCard) targetCard.classList.add('found');
+
+    const firstCellRect = currentLineCells[0].getBoundingClientRect();
+    onCorrectWord(firstCellRect.left + firstCellRect.width / 2, firstCellRect.top + firstCellRect.height / 2);
+
+    if (solvedCountInRound === 4) {
+      setTimeout(() => {
+        triggerVibration([30, 40, 50]);
+        for (let i = 0; i < 4; i++) {
+          spawnBubbles(width * (0.2 + i * 0.2), height * 0.8, 16, true, true);
+        }
+        startNewGame();
+      }, 900);
+    }
+  } else {
+    currentLineCells.forEach(c => c.classList.remove('selected'));
+  }
+
+  currentLineCells = [];
+  startCell = null;
+}
+
+gridEl.addEventListener('mousedown', handleStart);
+window.addEventListener('mousemove', handleMove);
+window.addEventListener('mouseup', handleEnd);
+gridEl.addEventListener('touchstart', handleStart, { passive: true });
+window.addEventListener('touchmove', handleMove, { passive: true });
+window.addEventListener('touchend', handleEnd, { passive: true });
+
+// 초기 구동
+syncEcosystem();
+renderOcean();
+startNewGame();
+updateLayoutUI();
+</script>
+
+</body>
+</html>
