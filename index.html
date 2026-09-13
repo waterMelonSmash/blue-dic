@@ -609,7 +609,7 @@ function handleModalBgClick(e) { if (e.target.id === 'settings-modal') closeSett
 function execAction(fn) { closeSettings(); fn(); }
 
 // ====================================================================
-// [심해 캔버스 물리 렌더러 - 외부 가상 경계 굴절 & 균일 유속]
+// [심해 캔버스 물리 렌더러 - 맞춤형 마진 & 튕김 감속 후 가속 로직]
 // ====================================================================
 const canvas = document.getElementById('oceanCanvas');
 const ctx = canvas.getContext('2d');
@@ -625,7 +625,7 @@ window.addEventListener('resize', resizeCanvas);
 const tintCanvas = document.createElement('canvas');
 const tintCtx = tintCanvas.getContext('2d');
 
-// 유속은 티어 1 수준(0.7 ~ 1.0)으로 전 티어 통일
+// 모든 티어 유속을 티어 1 수준(0.7 ~ 1.0)으로 통일
 const TIER_SPECS = [
   {
     tier: 3,
@@ -638,7 +638,7 @@ const TIER_SPECS = [
     fallbackFile: "emojis/fish/fish_fallback/fish_tier3_FB.svg",
     size: 140,
     speedMin: 0.4, speedMax: 0.5,
-    depthMinRatio: 0.05, depthMaxRatio: 0.95,
+    depthMaxRatio: 0.95,
     tintAlpha: 0.35,
     bodyAlpha: 0.95
   },
@@ -654,7 +654,7 @@ const TIER_SPECS = [
     fallbackFile: "emojis/fish/fish_fallback/fish_tier2_FB.svg",
     size: 90,
     speedMin: 0.4, speedMax: 0.5,
-    depthMinRatio: 0.08, depthMaxRatio: 0.88,
+    depthMaxRatio: 0.75, // 밑바닥 경계
     tintAlpha: 0.38,
     bodyAlpha: 0.92
   },
@@ -669,7 +669,7 @@ const TIER_SPECS = [
     fallbackFile: "emojis/fish/fish_fallback/fish_tier1_FB.svg",
     size: 52,
     speedMin: 0.4, speedMax: 0.5,
-    depthMinRatio: 0.10, depthMaxRatio: 0.55,
+    depthMaxRatio: 0.52, // 밑바닥 경계
     tintAlpha: 0.42,
     bodyAlpha: 0.90
   },
@@ -685,7 +685,7 @@ const TIER_SPECS = [
     fallbackFile: "emojis/fish/fish_fallback/fish_tier0_FB.svg",
     size: 32,
     speedMin: 0.4, speedMax: 0.5,
-    depthMinRatio: 0.05, depthMaxRatio: 0.30,
+    depthMaxRatio: 0.32, // 밑바닥 경계
     tintAlpha: 0.35,
     bodyAlpha: 0.94
   }
@@ -902,18 +902,17 @@ function syncEcosystem() {
         newCreatures.push(existing[i]);
       } else {
         const chosenFileIndex = Math.floor(Math.random() * spec.files.length);
-        const speed = Math.random() * (spec.speedMax - spec.speedMin) + spec.speedMin;
+        const baseSpeed = Math.random() * (spec.speedMax - spec.speedMin) + spec.speedMin;
         
         let angle;
-        if (spec.tier >= 2) {
-          angle = (Math.random() * Math.PI * 2);
+        if (spec.tier === 3) {
+          angle = Math.random() * Math.PI * 2; // 고래는 전방향
         } else {
           const side = Math.random() > 0.5 ? 0 : Math.PI;
-          angle = side + (Math.random() - 0.5) * 1.2;
+          angle = side + (Math.random() - 0.5) * 1.1; // 완만한 대각선
         }
 
-        const minY = height * spec.depthMinRatio;
-        const maxY = height * spec.depthMaxRatio;
+        const maxInitY = height * spec.depthMaxRatio;
 
         newCreatures.push({
           tier: spec.tier,
@@ -923,10 +922,11 @@ function syncEcosystem() {
           bodyAlpha: spec.bodyAlpha,
           tintAlpha: spec.tintAlpha,
           x: Math.random() * width,
-          y: Math.random() * (maxY - minY) + minY,
-          vx: Math.cos(angle) * speed,
-          vy: Math.sin(angle) * speed,
-          speed: speed
+          y: Math.random() * maxInitY,
+          vx: Math.cos(angle) * baseSpeed,
+          vy: Math.sin(angle) * baseSpeed,
+          baseSpeed: baseSpeed,
+          currentSpeed: baseSpeed
         });
       }
     }
@@ -1016,32 +1016,61 @@ function renderOcean(currentTime) {
   });
 
   swimmingCreatures.forEach(c => {
-    // 물고기 몸집 크기만큼 화면 밖으로 확장된 가상 경계 설정
-    const margin = c.size * 0.9;
-    const minX = -margin;
-    const maxX = width + margin;
-    const minY = (height * c.spec.depthMinRatio) - margin;
-    const maxY = (height * c.spec.depthMaxRatio) + margin;
+    // 1. 감속 후 점진적 가속 복원 (자연스러운 턴 물리)
+    if (c.currentSpeed < c.baseSpeed) {
+      c.currentSpeed += (c.baseSpeed - c.currentSpeed) * 0.025 * timeScale;
+    }
 
-    // 1. 직선 전진 (프레임 독립 이동)
+    const curLen = Math.hypot(c.vx, c.vy) || 1;
+    c.vx = (c.vx / curLen) * c.currentSpeed;
+    c.vy = (c.vy / curLen) * c.currentSpeed;
+
     c.x += c.vx * timeScale;
     c.y += c.vy * timeScale;
 
-    // 2. 화면 밖 가상 좌우 벽 굴절/반사 (화면 안쪽으로 반사 전환)
+    // 2. 티어별 마진 가상 벽 경계 설정
+    const margin = c.size * 1.5;
+    const minX = -margin;
+    const maxX = width + margin;
+    const minY = -margin; // 모든 티어 상단은 화면 위쪽 밖으로 확장
+
+    let maxY;
+    if (c.tier === 3) {
+      maxY = height + margin; // TIER 3 (고래): 하단도 화면 밖으로 완전히 확장
+    } else {
+      maxY = height * c.spec.depthMaxRatio; // TIER 0, 1, 2: 밑은 수심 한계선 유지
+    }
+
+    let collided = false;
+
+    // 좌우 가상 벽 충돌
     if (c.x > maxX && c.vx > 0) {
+      c.x = maxX;
       c.vx = -Math.abs(c.vx);
+      collided = true;
     } else if (c.x < minX && c.vx < 0) {
+      c.x = minX;
       c.vx = Math.abs(c.vx);
+      collided = true;
     }
 
-    // 3. 서식 수심 가상 상하 벽 굴절/반사
+    // 상하 가상 벽 충돌
     if (c.y > maxY && c.vy > 0) {
+      c.y = maxY;
       c.vy = -Math.abs(c.vy);
+      collided = true;
     } else if (c.y < minY && c.vy < 0) {
+      c.y = minY;
       c.vy = Math.abs(c.vy);
+      collided = true;
     }
 
-    // 4. 회전 렌더링 (화면 밖에서도 자연스럽게 진행 방향을 바라봄)
+    // 벽에 부딪혔을 때 감속 발생 (45% 속도로 부드럽게 완충 후 점진적 가속)
+    if (collided) {
+      c.currentSpeed = c.baseSpeed * 0.45;
+    }
+
+    // 3. 렌더링
     ctx.save();
     ctx.translate(c.x, c.y);
 
@@ -1051,7 +1080,7 @@ function renderOcean(currentTime) {
     }
 
     const pitchAngle = Math.atan2(c.vy, Math.abs(c.vx));
-    ctx.rotate(pitchAngle * 0.7);
+    ctx.rotate(pitchAngle * 0.65);
 
     ctx.globalAlpha = c.bodyAlpha;
 
