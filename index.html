@@ -311,7 +311,7 @@
     animation: jellyPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
-  /* 이모티콘 타일 기본 (100% 흰색 배경) */
+  /* 이모티콘 타일 기본 (100% 순백색 배경) */
   .cell.has-icon {
     background: #ffffff !important;
     border: 1px solid #ffffff !important;
@@ -325,18 +325,18 @@
     pointer-events: none;
   }
 
-  /* 이모티콘 타일 선택 시: 흰색 배경 100% 유지 + 주황 테두리/그림자 발광 */
+  /* 이모티콘 타일 선택 시: 흰 바탕 위에 투명감 있는 살구·주황 틴트 씌움 */
   .cell.has-icon.selected {
-    background: #ffffff !important;
+    background: linear-gradient(rgba(249, 115, 22, 0.28), rgba(249, 115, 22, 0.28)), #ffffff !important;
     border: 2px solid #f97316 !important;
     outline: none !important;
-    box-shadow: 0 0 10px rgba(249, 115, 22, 0.7), 0 2px 5px rgba(0, 0, 0, 0.35) !important;
+    box-shadow: 0 0 10px rgba(249, 115, 22, 0.7), 0 2px 6px rgba(0, 0, 0, 0.35) !important;
     transform: scale(1.08);
   }
 
-  /* 이모티콘 타일 정답 시: 흰색 배경 100% 유지 + 초록 테두리 발광 */
+  /* 이모티콘 타일 정답 시: 흰 바탕 위에 투명감 있는 에메랄드 틴트 씌움 */
   .cell.has-icon.matched {
-    background: #ffffff !important;
+    background: linear-gradient(rgba(46, 204, 113, 0.25), rgba(46, 204, 113, 0.25)), #ffffff !important;
     border: 2px solid #2ecc71 !important;
     outline: none !important;
     box-shadow: 0 0 12px rgba(46, 204, 113, 0.8) !important;
