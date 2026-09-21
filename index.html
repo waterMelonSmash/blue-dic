@@ -179,12 +179,16 @@
     transition: border-color 0.25s ease, box-shadow 0.25s ease;
   }
 
+  /* 퀘스트 카드 이모티콘 뒤의 흰색 레이어 */
   .quest-card img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
+    width: calc(100% - 10px);
+    height: calc(100% - 10px);
+    object-fit: contain;
     pointer-events: none;
+    background-color: #ffffff;
+    border-radius: 10px;
+    padding: 6px;
+    box-shadow: inset 0 0 4px rgba(0, 0, 0, 0.08);
     transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
@@ -207,7 +211,7 @@
     z-index: 10;
   }
   .quest-card.active-preview img {
-    transform: scale(1.15);
+    transform: scale(1.1);
   }
   .quest-card.active-preview .quest-overlay {
     opacity: 0;
@@ -296,12 +300,17 @@
     font-weight: bold;
     color: #e2e8f0;
   }
+
+  /* 격자판 내부 이모티콘 뒤의 흰색 레이어 */
   .cell img {
-    width: 28px;
-    height: 28px;
+    width: 30px;
+    height: 30px;
     object-fit: contain;
     pointer-events: none;
-    opacity: 0.95;
+    background-color: #ffffff;
+    border-radius: 6px;
+    padding: 2px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
   }
 
   .cell.selected {
@@ -498,11 +507,8 @@ function triggerVibration(pattern) {
 // ====================================================================
 // [구글 스프레드시트 실시간 연동]
 // ====================================================================
-// 동일한 파일 주소에서 뒤의 gid(탭 번호)만 달라짐
-const SHEET_BASE = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCtYO07v05Ud7heXDdK7k4RCaG5i5oELPe5oBhvFw6yaKsxXzKVO1L2_Lodc89WtLgNO3T5V5a-r8v/pub?output=csv";
-
-const URL_HANJA_DATA = `${SHEET_BASE}&gid=0`;          // 1번째 탭 (한자 낱글자)
-const URL_WORD_DATA  = `${SHEET_BASE}&gid=1022283958`;  // 2번째 탭 (한자 단어)
+const URL_HANJA_DATA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCtYO07v05Ud7heXDdK7k4RCaG5i5oELPe5oBhvFw6yaKsxXzKVO1L2_Lodc89WtLgNO3T5V5a-r8v/pub?gid=0&single=true&output=csv";
+const URL_WORD_DATA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_lQ7_Yh-iunlhLfMAjwRXUM56iiP6UWAsx3VcsxF6yENBYfN3CwdGITxAOd-LtkzmQxJw98J4xZVH/pub?gid=0&single=true&output=csv";
 
 let HANJA_DICT = {};
 let WORD_DATABASE = [];
@@ -628,7 +634,6 @@ window.addEventListener('resize', resizeCanvas);
 const tintCanvas = document.createElement('canvas');
 const tintCtx = tintCanvas.getContext('2d');
 
-// 모든 티어 유속을 티어 1 수준(0.7 ~ 1.0)으로 통일
 const TIER_SPECS = [
   {
     tier: 3,
@@ -640,7 +645,7 @@ const TIER_SPECS = [
     ],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier3_FB.svg",
     size: 140,
-    speedMin: 0.4, speedMax: 0.5,
+    speedMin: 0.7, speedMax: 1.0,
     depthMaxRatio: 0.95,
     tintAlpha: 0.35,
     bodyAlpha: 0.95
@@ -656,8 +661,8 @@ const TIER_SPECS = [
     ],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier2_FB.svg",
     size: 90,
-    speedMin: 0.4, speedMax: 0.5,
-    depthMaxRatio: 0.75, // 밑바닥 경계
+    speedMin: 0.7, speedMax: 1.0,
+    depthMaxRatio: 0.75,
     tintAlpha: 0.38,
     bodyAlpha: 0.92
   },
@@ -671,8 +676,8 @@ const TIER_SPECS = [
     ],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier1_FB.svg",
     size: 52,
-    speedMin: 0.4, speedMax: 0.5,
-    depthMaxRatio: 0.52, // 밑바닥 경계
+    speedMin: 0.7, speedMax: 1.0,
+    depthMaxRatio: 0.52,
     tintAlpha: 0.42,
     bodyAlpha: 0.90
   },
@@ -687,8 +692,8 @@ const TIER_SPECS = [
     ],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier0_FB.svg",
     size: 32,
-    speedMin: 0.4, speedMax: 0.5,
-    depthMaxRatio: 0.32, // 밑바닥 경계
+    speedMin: 0.7, speedMax: 1.0,
+    depthMaxRatio: 0.32,
     tintAlpha: 0.35,
     bodyAlpha: 0.94
   }
@@ -909,10 +914,10 @@ function syncEcosystem() {
         
         let angle;
         if (spec.tier === 3) {
-          angle = Math.random() * Math.PI * 2; // 고래는 전방향
+          angle = Math.random() * Math.PI * 2;
         } else {
           const side = Math.random() > 0.5 ? 0 : Math.PI;
-          angle = side + (Math.random() - 0.5) * 1.1; // 완만한 대각선
+          angle = side + (Math.random() - 0.5) * 1.1;
         }
 
         const maxInitY = height * spec.depthMaxRatio;
@@ -1019,7 +1024,6 @@ function renderOcean(currentTime) {
   });
 
   swimmingCreatures.forEach(c => {
-    // 1. 감속 후 점진적 가속 복원 (자연스러운 턴 물리)
     if (c.currentSpeed < c.baseSpeed) {
       c.currentSpeed += (c.baseSpeed - c.currentSpeed) * 0.025 * timeScale;
     }
@@ -1031,22 +1035,20 @@ function renderOcean(currentTime) {
     c.x += c.vx * timeScale;
     c.y += c.vy * timeScale;
 
-    // 2. 티어별 마진 가상 벽 경계 설정
     const margin = c.size * 1.5;
     const minX = -margin;
     const maxX = width + margin;
-    const minY = -margin; // 모든 티어 상단은 화면 위쪽 밖으로 확장
+    const minY = -margin;
 
     let maxY;
     if (c.tier === 3) {
-      maxY = height + margin; // TIER 3 (고래): 하단도 화면 밖으로 완전히 확장
+      maxY = height + margin;
     } else {
-      maxY = height * c.spec.depthMaxRatio; // TIER 0, 1, 2: 밑은 수심 한계선 유지
+      maxY = height * c.spec.depthMaxRatio;
     }
 
     let collided = false;
 
-    // 좌우 가상 벽 충돌
     if (c.x > maxX && c.vx > 0) {
       c.x = maxX;
       c.vx = -Math.abs(c.vx);
@@ -1057,7 +1059,6 @@ function renderOcean(currentTime) {
       collided = true;
     }
 
-    // 상하 가상 벽 충돌
     if (c.y > maxY && c.vy > 0) {
       c.y = maxY;
       c.vy = -Math.abs(c.vy);
@@ -1068,12 +1069,10 @@ function renderOcean(currentTime) {
       collided = true;
     }
 
-    // 벽에 부딪혔을 때 감속 발생 (45% 속도로 부드럽게 완충 후 점진적 가속)
     if (collided) {
       c.currentSpeed = c.baseSpeed * 0.45;
     }
 
-    // 3. 렌더링
     ctx.save();
     ctx.translate(c.x, c.y);
 
