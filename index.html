@@ -281,7 +281,6 @@
     margin-top: 2px;
   }
 
-  /* 일반 텍스트 셀 기본 */
   .cell {
     width: 40px;
     height: 40px;
@@ -298,7 +297,6 @@
     color: #e2e8f0;
   }
 
-  /* 일반 텍스트 셀 선택/정답 상태 */
   .cell.selected {
     background: rgba(249, 115, 22, 0.45);
     outline: 2px solid #f97316;
@@ -311,7 +309,6 @@
     animation: jellyPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
 
-  /* 이모티콘 타일 기본 (100% 순백색 배경) */
   .cell.has-icon {
     background: #ffffff !important;
     border: 1px solid #ffffff !important;
@@ -325,7 +322,6 @@
     pointer-events: none;
   }
 
-  /* 이모티콘 타일 선택 시: 흰 바탕 위에 투명감 있는 살구·주황 틴트 씌움 */
   .cell.has-icon.selected {
     background: linear-gradient(rgba(249, 115, 22, 0.28), rgba(249, 115, 22, 0.28)), #ffffff !important;
     border: 2px solid #f97316 !important;
@@ -334,7 +330,6 @@
     transform: scale(1.08);
   }
 
-  /* 이모티콘 타일 정답 시: 흰 바탕 위에 투명감 있는 에메랄드 틴트 씌움 */
   .cell.has-icon.matched {
     background: linear-gradient(rgba(46, 204, 113, 0.25), rgba(46, 204, 113, 0.25)), #ffffff !important;
     border: 2px solid #2ecc71 !important;
@@ -523,10 +518,10 @@ function triggerVibration(pattern) {
 }
 
 // ====================================================================
-// [구글 스프레드시트 실시간 연동]
+// [구글 스프레드시트 실시간 연동 (단어 시트 GID 수정 및 캐시 방지)]
 // ====================================================================
 const URL_HANJA_DATA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCtYO07v05Ud7heXDdK7k4RCaG5i5oELPe5oBhvFw6yaKsxXzKVO1L2_Lodc89WtLgNO3T5V5a-r8v/pub?gid=0&single=true&output=csv";
-const URL_WORD_DATA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ_lQ7_Yh-iunlhLfMAjwRXUM56iiP6UWAsx3VcsxF6yENBYfN3CwdGITxAOd-LtkzmQxJw98J4xZVH/pub?gid=0&single=true&output=csv";
+const URL_WORD_DATA  = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCtYO07v05Ud7heXDdK7k4RCaG5i5oELPe5oBhvFw6yaKsxXzKVO1L2_Lodc89WtLgNO3T5V5a-r8v/pub?gid=1022283958&single=true&output=csv";
 
 let HANJA_DICT = {};
 let WORD_DATABASE = [];
@@ -556,9 +551,10 @@ function parseCSV(text) {
 
 async function loadSheetData() {
   try {
+    const cacheBuster = `&_cb=${Date.now()}`;
     const [resHanja, resWord] = await Promise.all([
-      fetch(URL_HANJA_DATA),
-      fetch(URL_WORD_DATA)
+      fetch(URL_HANJA_DATA + cacheBuster),
+      fetch(URL_WORD_DATA + cacheBuster)
     ]);
 
     const textHanja = await resHanja.text();
@@ -1271,13 +1267,21 @@ function generateSafeBoard() {
   board = fallbackBoard;
 }
 
+// ====================================================================
+// [피셔-예이츠 무작위 셔플을 적용한 출제 엔진]
+// ====================================================================
 function startNewGame() {
   hideTooltip();
   solvedCountInRound = 0;
   if (WORD_DATABASE.length === 0) return;
 
-  const shuffled = [...WORD_DATABASE].sort(() => 0.5 - Math.random());
-  currentQuestions = shuffled.slice(0, 4).map((q, idx) => ({ ...q, id: `q_${idx}`, isFound: false }));
+  const pool = [...WORD_DATABASE];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+
+  currentQuestions = pool.slice(0, 4).map((q, idx) => ({ ...q, id: `q_${idx}`, isFound: false }));
 
   const questListEl = document.getElementById('questList');
   questListEl.innerHTML = '';
