@@ -1060,7 +1060,7 @@ function renderGrid() {
 }
 
 // ====================================================================
-// [조작 엔진: 탭과 드래그의 완전 분리]
+// [조작 엔진: 터치/마우스 통합 포인터 처리]
 // ====================================================================
 const gridEl = document.getElementById('grid');
 let isPointerActive = false;
@@ -1127,7 +1127,8 @@ function handlePointerMove(clientX, clientY) {
 
   const dist = Math.hypot(clientX - startX, clientY - startY);
 
-  if (dist > 15) {
+  // 12px 이상 움직이면 드래그로 판정하고 기존 툴팁을 닫음
+  if (dist > 12) {
     if (!isDraggingLine) {
       isDraggingLine = true;
       hideTooltip();
@@ -1153,7 +1154,7 @@ function handlePointerEnd() {
   if (!isPointerActive) return;
   isPointerActive = false;
 
-  // 가볍게 탭(터치)만 하고 뗐을 때 즉시 툴팁 표시
+  // 1. 단순 탭(터치 후 바로 뗌)인 경우: 즉시 툴팁 토글
   if (!isDraggingLine) {
     if (startCell) {
       if (startCell.dataset.type === 'hanja') {
@@ -1166,6 +1167,7 @@ function handlePointerEnd() {
     return;
   }
 
+  // 2. 드래그를 완료한 경우: 정답 판정
   let isCorrectMatch = false;
 
   if (currentLineCells.length === 3) {
@@ -1216,9 +1218,10 @@ function handlePointerEnd() {
 
   currentLineCells = [];
   startCell = null;
-  setTimeout(() => { isDraggingLine = false; }, 50);
+  isDraggingLine = false;
 }
 
+// 터치 이벤트 연결
 gridEl.addEventListener('touchstart', (e) => {
   const t = e.touches[0];
   handlePointerStart(t.clientX, t.clientY);
@@ -1230,17 +1233,25 @@ window.addEventListener('touchmove', (e) => {
   handlePointerMove(t.clientX, t.clientY);
 }, { passive: true });
 
-window.addEventListener('touchend', () => {
+window.addEventListener('touchend', (e) => {
   if (!isPointerActive) return;
   handlePointerEnd();
 }, { passive: true });
 
+// 마우스 이벤트 연결 (PC 브라우저 호환)
 gridEl.addEventListener('mousedown', (e) => handlePointerStart(e.clientX, e.clientY));
 window.addEventListener('mousemove', (e) => handlePointerMove(e.clientX, e.clientY));
 window.addEventListener('mouseup', () => handlePointerEnd());
 
-document.addEventListener('pointerdown', (e) => {
-  if (!e.target.closest('.cell') && !e.target.closest('#settings-btn') && !e.target.closest('#settings-modal') && !e.target.closest('#allclear-modal') && !e.target.closest('#next-refresh-btn')) {
+// 보드 바깥 영역 터치/클릭 시 툴팁 닫기
+window.addEventListener('touchstart', (e) => {
+  if (!e.target.closest('#grid') && !e.target.closest('#tooltip')) {
+    hideTooltip();
+  }
+}, { passive: true });
+
+window.addEventListener('mousedown', (e) => {
+  if (!e.target.closest('#grid') && !e.target.closest('#tooltip')) {
     hideTooltip();
   }
 });
