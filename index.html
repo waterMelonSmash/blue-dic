@@ -243,6 +243,7 @@
     border-radius: 16px;
     box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
     margin-top: 2px;
+    touch-action: none;
   }
 
   .cell {
@@ -441,7 +442,7 @@
 
   <div id="settings-modal" onclick="handleModalBgClick(event)">
     <div class="modal-content">
-      <div class="modal-title">⚙️ 게임 및 바다 설정</div>
+      <div class="modal-title">⚙️️ 게임 및 바다 설정</div>
       
       <div class="mode-select-label">화면 레이아웃 모드</div>
       <div class="size-btn-group">
@@ -1169,20 +1170,15 @@ function toggleTileTooltip(targetEl, text) {
   }
 }
 
-// 모바일 바깥 터치 판정: 퀘스트 카드나 타일 터치는 닫히지 않도록 엄격 분리
-document.addEventListener('touchstart', (e) => {
+// 빈 바다 영역을 탭했을 때만 툴팁 닫기
+function handleOutsideDismiss(e) {
   if (e.target.closest('.quest-card') || e.target.closest('.cell') || e.target.closest('#settings-btn') || e.target.closest('#settings-modal') || e.target.closest('#allclear-modal') || e.target.closest('#next-refresh-btn')) {
     return;
   }
   hideTooltip();
-}, { passive: true });
-
-document.addEventListener('mousedown', (e) => {
-  if (e.target.closest('.quest-card') || e.target.closest('.cell') || e.target.closest('#settings-btn') || e.target.closest('#settings-modal') || e.target.closest('#allclear-modal') || e.target.closest('#next-refresh-btn')) {
-    return;
-  }
-  hideTooltip();
-});
+}
+document.addEventListener('touchstart', handleOutsideDismiss, { passive: true });
+document.addEventListener('mousedown', handleOutsideDismiss);
 
 function generateSafeBoard() {
   const directions = [
@@ -1338,11 +1334,15 @@ function renderGrid() {
   }
 }
 
+// ====================================================================
+// [터치/클릭 즉각 반응 드래그 & 탭 판정 엔진]
+// ====================================================================
 const gridEl = document.getElementById('grid');
 let isDragging = false;
 let startCell = null;
 let startX = 0, startY = 0;
 let hasMovedFar = false;
+let touchStartTime = 0;
 let currentLineCells = [];
 
 function getCellFromPoint(x, y) {
@@ -1391,6 +1391,7 @@ function handleStart(e) {
 
   isDragging = true;
   hasMovedFar = false;
+  touchStartTime = Date.now();
   startCell = cell;
   startX = pt.clientX;
   startY = pt.clientY;
@@ -1405,8 +1406,7 @@ function handleMove(e) {
   const pt = e.touches ? e.touches[0] : e;
 
   const dist = Math.hypot(pt.clientX - startX, pt.clientY - startY);
-  // 모바일 터치 미세 흔들림 허용 범위를 14px로 확장
-  if (dist > 14) {
+  if (dist > 12) {
     if (!hasMovedFar) {
       hideTooltip();
       hasMovedFar = true;
@@ -1424,11 +1424,12 @@ function handleMove(e) {
   }
 }
 
-function handleEnd() {
+function handleEnd(e) {
   if (!isDragging) return;
   isDragging = false;
+  const elapsed = Date.now() - touchStartTime;
 
-  // 손가락 터치 탭 판정: 미세 흔들림 이내일 때 짧은 설명 토글
+  // 가벼운 터치(탭/클릭): 이동 거리가 작으면 시간과 무관하게 즉시 설명 토글
   if (!hasMovedFar && startCell) {
     startCell.classList.remove('selected');
     toggleTileTooltip(startCell, startCell.dataset.short);
@@ -1437,6 +1438,7 @@ function handleEnd() {
     return;
   }
 
+  // 2개 타일 직선 드래그 매칭 판정
   let isCorrectMatch = false;
 
   if (currentLineCells.length === 2) {
@@ -1489,12 +1491,30 @@ function handleEnd() {
   startCell = null;
 }
 
+// 마우스 이벤트
 gridEl.addEventListener('mousedown', handleStart);
 window.addEventListener('mousemove', handleMove);
 window.addEventListener('mouseup', handleEnd);
-gridEl.addEventListener('touchstart', handleStart, { passive: true });
-window.addEventListener('touchmove', handleMove, { passive: true });
-window.addEventListener('touchend', handleEnd, { passive: true });
+
+// 모바일 터치 이벤트: passive: false 로 브라우저 기본 제스처 간섭 차단
+gridEl.addEventListener('touchstart', (e) => {
+  e.preventDefault();
+  handleStart(e);
+}, { passive: false });
+
+window.addEventListener('touchmove', (e) => {
+  if (isDragging) {
+    e.preventDefault();
+    handleMove(e);
+  }
+}, { passive: false });
+
+window.addEventListener('touchend', (e) => {
+  if (isDragging) {
+    e.preventDefault();
+    handleEnd(e);
+  }
+}, { passive: false });
 
 async function initGameApp() {
   const success = await loadSheetData();
