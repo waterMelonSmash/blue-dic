@@ -76,7 +76,7 @@
     max-width: 380px;
   }
 
-  /* 상단 진행도 및 안내 헤더 */
+  /* 상단 헤더 */
   .ocean-header {
     display: flex;
     flex-direction: column;
@@ -150,7 +150,7 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* 6x6 격자판 (시원하게 50px로 확대) */
+  /* 6x6 격자판 */
   #grid {
     display: grid;
     grid-template-columns: repeat(6, 50px);
@@ -179,7 +179,7 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   }
 
-  /* 1) 한자 타일 스타일 (출발점: 짙은 청색) */
+  /* 정답 한자 타일 (파란색) */
   .cell.type-hanja {
     background: linear-gradient(135deg, #0284c7, #075985);
     border: 2px solid #38bdf8;
@@ -189,14 +189,14 @@
     text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
   }
 
-  /* 2) 이모티콘 타일 스타일 (도착점: 순백색) */
+  /* 이모티콘 타일 (흰색) */
   .cell.type-imo {
     background: #ffffff;
     border: 1px solid #ffffff;
     font-size: 26px;
   }
 
-  /* 드래그 선택 중 */
+  /* 선택 중 */
   .cell.selected {
     border: 2.5px solid #f97316 !important;
     box-shadow: 0 0 12px rgba(249, 115, 22, 0.85) !important;
@@ -209,7 +209,7 @@
     background: linear-gradient(rgba(249, 115, 22, 0.3), rgba(249, 115, 22, 0.3)), #ffffff !important;
   }
 
-  /* 정답 매칭 완료 */
+  /* 정답 완료 */
   .cell.matched {
     border: 2.5px solid #2ecc71 !important;
     box-shadow: 0 0 14px rgba(46, 204, 113, 0.9) !important;
@@ -250,7 +250,6 @@
     filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.5));
   }
 
-  /* 모달 레이아웃 */
   #settings-modal, #allclear-modal {
     display: none;
     position: fixed;
@@ -359,7 +358,6 @@
     </div>
   </div>
 
-  <!-- 설정 모달 -->
   <div id="settings-modal" onclick="handleModalBgClick(event)">
     <div class="modal-content">
       <div class="modal-title">⚙️ 게임 설정</div>
@@ -369,7 +367,6 @@
     </div>
   </div>
 
-  <!-- 전체 완료 모달 -->
   <div id="allclear-modal">
     <div class="modal-content">
       <div class="modal-title">🏆 전체 완료!</div>
@@ -401,13 +398,11 @@ function splitMeaning(rawText) {
   return { short: rawText.trim(), long: rawText.trim() };
 }
 
-// ====================================================================
-// [구글 시트 연동]
-// ====================================================================
 const URL_DATA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCtYO07v05Ud7heXDdK7k4RCaG5i5oELPe5oBhvFw6yaKsxXzKVO1L2_Lodc89WtLgNO3T5V5a-r8v/pub?gid=0&single=true&output=csv";
 
 let HANJA_LIST = [];
-let ALL_FILLER_ITEMS = [];
+// 빈칸 채우기용은 오직 이모티콘만 보관 (함정 한자 제거)
+let ALL_FILLER_IMOS = [];
 let solvedHanjaSet = new Set();
 
 function parseCSV(text) {
@@ -440,7 +435,7 @@ async function loadSheetData() {
     const rows = parseCSV(text);
 
     HANJA_LIST = [];
-    ALL_FILLER_ITEMS = [];
+    ALL_FILLER_IMOS = [];
 
     for (let i = 1; i < rows.length; i++) {
       const r = rows[i];
@@ -468,8 +463,8 @@ async function loadSheetData() {
         hanjaFullDesc: `[1] ${m1.long}\n[2] ${m2.long}`
       });
 
-      ALL_FILLER_ITEMS.push(
-        { text: hanja, type: 'hanja', desc: `[1] ${m1.long}\n[2] ${m2.long}` },
+      // 빈칸을 채울 때 사용할 순수 이모티콘 풀만 축적
+      ALL_FILLER_IMOS.push(
         { text: imo1, type: 'imo', desc: m1.short },
         { text: imo2, type: 'imo', desc: m2.short }
       );
@@ -482,7 +477,6 @@ async function loadSheetData() {
   }
 }
 
-// 모달 제어
 function openSettings() { document.getElementById('settings-modal').classList.add('active'); }
 function closeSettings() { document.getElementById('settings-modal').classList.remove('active'); }
 function handleModalBgClick(e) { if (e.target.id === 'settings-modal') closeSettings(); }
@@ -500,9 +494,7 @@ function restartLoop() {
   startNewGame();
 }
 
-// ====================================================================
-// [심해 배경 캔버스 물리]
-// ====================================================================
+// 심해 배경 캔버스 물리
 const canvas = document.getElementById('oceanCanvas');
 const ctx = canvas.getContext('2d');
 let width, height;
@@ -520,43 +512,25 @@ const tintCtx = tintCanvas.getContext('2d');
 const TIER_SPECS = [
   {
     tier: 3,
-    files: [
-      "emojis/fish/fish_rank/tier3_whale1.svg",
-      "emojis/fish/fish_rank/tier3_whale2.svg",
-      "emojis/fish/fish_rank/tier3_whale3.svg"
-    ],
+    files: ["emojis/fish/fish_rank/tier3_whale1.svg", "emojis/fish/fish_rank/tier3_whale2.svg", "emojis/fish/fish_rank/tier3_whale3.svg"],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier3_FB.svg",
     size: 140, speedMin: 0.7, speedMax: 1.0, depthMaxRatio: 0.95, tintAlpha: 0.35, bodyAlpha: 0.95
   },
   {
     tier: 2,
-    files: [
-      "emojis/fish/fish_rank/tier2_shark.svg",
-      "emojis/fish/fish_rank/tier2_shark2.svg",
-      "emojis/fish/fish_rank/tier2_shark3.svg",
-      "emojis/fish/fish_rank/tier2_sunfish.svg"
-    ],
+    files: ["emojis/fish/fish_rank/tier2_shark.svg", "emojis/fish/fish_rank/tier2_shark2.svg", "emojis/fish/fish_rank/tier2_shark3.svg", "emojis/fish/fish_rank/tier2_sunfish.svg"],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier2_FB.svg",
     size: 90, speedMin: 0.7, speedMax: 1.0, depthMaxRatio: 0.75, tintAlpha: 0.38, bodyAlpha: 0.92
   },
   {
     tier: 1,
-    files: [
-      "emojis/fish/fish_rank/tier1_jellyfish.svg",
-      "emojis/fish/fish_rank/tier1_seaturtle.svg",
-      "emojis/fish/fish_rank/tier1_squid.svg"
-    ],
+    files: ["emojis/fish/fish_rank/tier1_jellyfish.svg", "emojis/fish/fish_rank/tier1_seaturtle.svg", "emojis/fish/fish_rank/tier1_squid.svg"],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier1_FB.svg",
     size: 52, speedMin: 0.7, speedMax: 1.0, depthMaxRatio: 0.52, tintAlpha: 0.42, bodyAlpha: 0.90
   },
   {
     tier: 0,
-    files: [
-      "emojis/fish/fish_rank/tier0_clown_fish.svg",
-      "emojis/fish/fish_rank/tier0_fish1.svg",
-      "emojis/fish/fish_rank/tier0_fish2.svg",
-      "emojis/fish/fish_rank/tier0_shrimp.svg"
-    ],
+    files: ["emojis/fish/fish_rank/tier0_clown_fish.svg", "emojis/fish/fish_rank/tier0_fish1.svg", "emojis/fish/fish_rank/tier0_fish2.svg", "emojis/fish/fish_rank/tier0_shrimp.svg"],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier0_FB.svg",
     size: 32, speedMin: 0.7, speedMax: 1.0, depthMaxRatio: 0.32, tintAlpha: 0.35, bodyAlpha: 0.94
   }
@@ -779,9 +753,9 @@ function renderOcean(currentTime) {
 
     let collided = false;
     if (c.x > maxX && c.vx > 0) { c.x = maxX; c.vx = -Math.abs(c.vx); collided = true; }
-    else if (c.x < minX && c.vx < 0) { c.x = minX; c.vx = Math.abs(c.vx); collided = true; }
+    else if (c.x < minX && c.vx < 0) { c.x = minX; c.vx = -Math.abs(c.vx); collided = true; }
     if (c.y > maxY && c.vy > 0) { c.y = maxY; c.vy = -Math.abs(c.vy); collided = true; }
-    else if (c.y < minY && c.vy < 0) { c.y = minY; c.vy = Math.abs(c.vy); collided = true; }
+    else if (c.y < minY && c.vy < 0) { c.y = minY; c.vy = -Math.abs(c.vy); collided = true; }
 
     if (collided) c.currentSpeed = c.baseSpeed * 0.45;
 
@@ -878,8 +852,7 @@ document.addEventListener('pointerdown', (e) => {
 });
 
 // ====================================================================
-// [3칸 일직선 보드 생성 엔진]
-// 순서: [한자 (step 1)] -> [의미1 이모티콘 (step 2)] -> [의미2 이모티콘 (step 3)]
+// [보드 생성 엔진: 격자판에 오직 정답 한자만 배치하고 나머지는 순수 이모티콘으로 채움]
 // ====================================================================
 function generate3StepBoard() {
   const directions = [
@@ -912,7 +885,7 @@ function generate3StepBoard() {
 
         if (r3 >= 0 && r3 < GRID_SIZE && c3 >= 0 && c3 < GRID_SIZE) {
           if (testBoard[r][c] === null && testBoard[r2][c2] === null && testBoard[r3][c3] === null) {
-            // 1단계: 한자 타일
+            // 1단계: 정답 한자 타일 (파란색)
             testBoard[r][c] = {
               text: q.hanja,
               type: 'hanja',
@@ -920,7 +893,7 @@ function generate3StepBoard() {
               ownerHanja: q.hanja,
               step: 1
             };
-            // 2단계: 1번 이모티콘
+            // 2단계: 1번 이모티콘 (흰색)
             testBoard[r2][c2] = {
               text: q.firstImo,
               type: 'imo',
@@ -928,7 +901,7 @@ function generate3StepBoard() {
               ownerHanja: q.hanja,
               step: 2
             };
-            // 3단계: 2번 이모티콘
+            // 3단계: 2번 이모티콘 (흰색)
             testBoard[r3][c3] = {
               text: q.secondImo,
               type: 'imo',
@@ -945,10 +918,15 @@ function generate3StepBoard() {
 
     if (!allPlaced) continue;
 
-    // 빈칸 채우기 (출제되지 않은 다른 글자/이모티콘으로 자연스럽게 구성)
-    const currentSet = new Set(currentActiveHanjas.map(q => q.hanja));
-    let safeFillers = ALL_FILLER_ITEMS.filter(f => !currentSet.has(f.text));
-    if (safeFillers.length === 0) safeFillers = ALL_FILLER_ITEMS;
+    // ★ 핵심: 나머지 모든 빈칸은 오직 '이모티콘' 타일로만 채웁니다 (함정 한자 0개)
+    const activeImoSet = new Set();
+    currentActiveHanjas.forEach(q => {
+      activeImoSet.add(q.firstImo);
+      activeImoSet.add(q.secondImo);
+    });
+
+    let safeFillers = ALL_FILLER_IMOS.filter(f => !activeImoSet.has(f.text));
+    if (safeFillers.length === 0) safeFillers = ALL_FILLER_IMOS;
 
     for (let r = 0; r < GRID_SIZE; r++) {
       for (let c = 0; c < GRID_SIZE; c++) {
@@ -956,7 +934,7 @@ function generate3StepBoard() {
           const rand = safeFillers[Math.floor(Math.random() * safeFillers.length)];
           testBoard[r][c] = {
             text: rand.text,
-            type: rand.type,
+            type: 'imo', // 무조건 이모티콘 타일
             desc: rand.desc,
             ownerHanja: null,
             step: 0
@@ -986,7 +964,7 @@ function startNewGame() {
     return;
   }
 
-  // 6x6 보드에는 3개 세트(총 9칸 점유)가 가장 쾌적하게 배치됩니다
+  // 6x6 보드에는 3개 세트(한자 3개, 이모티콘 6개)가 가장 여유롭고 쾌적하게 배치됩니다
   const countToPick = Math.min(3, availablePool.length);
 
   const pool = [...availablePool];
@@ -1092,7 +1070,6 @@ function onTouchMove(clientX, clientY) {
 
   const dist = Math.hypot(clientX - startX, clientY - startY);
 
-  // 12px 이상 움직이면 드래그 모드로 전환
   if (dist > 12) {
     if (!isDragMode) {
       isDragMode = true;
@@ -1119,7 +1096,7 @@ function onTouchEnd() {
   if (!isPointerActive) return;
   isPointerActive = false;
 
-  // 1) 드래그 없이 가볍게 탭한 경우: 설명 툴팁 토글
+  // 1) 드래그 없이 탭한 경우: 설명 툴팁 토글
   if (!isDragMode && startCell) {
     toggleTileTooltip(startCell, startCell.dataset.desc);
     clearHighlight();
@@ -1140,7 +1117,6 @@ function onTouchEnd() {
     const step2 = parseInt(c2.dataset.step);
     const step3 = parseInt(c3.dataset.step);
 
-    // 같은 한자에 속해 있고, 정확히 1 -> 2 -> 3 순서로 이어졌는지 검증
     if (owner && owner === c2.dataset.owner && owner === c3.dataset.owner &&
         step1 === 1 && step2 === 2 && step3 === 3) {
       
@@ -1160,7 +1136,6 @@ function onTouchEnd() {
         const firstRect = c1.getBoundingClientRect();
         onCorrectWord(firstRect.left + firstRect.width / 2, firstRect.top + firstRect.height / 2);
 
-        // 현재 판의 모든 한자를 다 찾으면 다음 판으로 전환
         if (solvedInCurrentBoard === currentActiveHanjas.length) {
           setTimeout(() => {
             triggerVibration([30, 40, 50]);
@@ -1183,12 +1158,10 @@ function onTouchEnd() {
   isDragMode = false;
 }
 
-// 마우스 이벤트
 gridEl.addEventListener('mousedown', (e) => onTouchStart(e.clientX, e.clientY));
 window.addEventListener('mousemove', (e) => onTouchMove(e.clientX, e.clientY));
 window.addEventListener('mouseup', () => onTouchEnd());
 
-// 모바일 터치 이벤트
 gridEl.addEventListener('touchstart', (e) => {
   const touch = e.touches[0];
   onTouchStart(touch.clientX, touch.clientY);
