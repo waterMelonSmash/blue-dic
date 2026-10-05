@@ -2,6 +2,11 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<!-- 웹뷰 및 브라우저 강제 최신 로드 (캐시 방지 메타태그) -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>푸른 바다 한자 퍼즐</title>
 
@@ -76,7 +81,6 @@
     max-width: 380px;
   }
 
-  /* 상단 헤더 */
   .ocean-header {
     display: flex;
     flex-direction: column;
@@ -150,7 +154,6 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
-  /* 6x6 격자판 */
   #grid {
     display: grid;
     grid-template-columns: repeat(6, 50px);
@@ -179,7 +182,7 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   }
 
-  /* 정답 한자 타일 (파란색) */
+  /* 정답 한자 타일 */
   .cell.type-hanja {
     background: linear-gradient(135deg, #0284c7, #075985);
     border: 2px solid #38bdf8;
@@ -189,7 +192,7 @@
     text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
   }
 
-  /* 이모티콘 타일 (흰색) */
+  /* 이모티콘 타일 */
   .cell.type-imo {
     background: #ffffff;
     border: 1px solid #ffffff;
@@ -401,7 +404,6 @@ function splitMeaning(rawText) {
 const URL_DATA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCtYO07v05Ud7heXDdK7k4RCaG5i5oELPe5oBhvFw6yaKsxXzKVO1L2_Lodc89WtLgNO3T5V5a-r8v/pub?gid=0&single=true&output=csv";
 
 let HANJA_LIST = [];
-// 빈칸 채우기용은 오직 이모티콘만 보관 (함정 한자 제거)
 let ALL_FILLER_IMOS = [];
 let solvedHanjaSet = new Set();
 
@@ -463,7 +465,6 @@ async function loadSheetData() {
         hanjaFullDesc: `[1] ${m1.long}\n[2] ${m2.long}`
       });
 
-      // 빈칸을 채울 때 사용할 순수 이모티콘 풀만 축적
       ALL_FILLER_IMOS.push(
         { text: imo1, type: 'imo', desc: m1.short },
         { text: imo2, type: 'imo', desc: m2.short }
@@ -494,7 +495,6 @@ function restartLoop() {
   startNewGame();
 }
 
-// 심해 배경 캔버스 물리
 const canvas = document.getElementById('oceanCanvas');
 const ctx = canvas.getContext('2d');
 let width, height;
@@ -753,9 +753,9 @@ function renderOcean(currentTime) {
 
     let collided = false;
     if (c.x > maxX && c.vx > 0) { c.x = maxX; c.vx = -Math.abs(c.vx); collided = true; }
-    else if (c.x < minX && c.vx < 0) { c.x = minX; c.vx = -Math.abs(c.vx); collided = true; }
+    else if (c.x < minX && c.vx < 0) { c.x = minX; c.vx = Math.abs(c.vx); collided = true; }
     if (c.y > maxY && c.vy > 0) { c.y = maxY; c.vy = -Math.abs(c.vy); collided = true; }
-    else if (c.y < minY && c.vy < 0) { c.y = minY; c.vy = -Math.abs(c.vy); collided = true; }
+    else if (c.y < minY && c.vy < 0) { c.y = minY; c.vy = Math.abs(c.vy); collided = true; }
 
     if (collided) c.currentSpeed = c.baseSpeed * 0.45;
 
@@ -802,9 +802,7 @@ function renderOcean(currentTime) {
   requestAnimationFrame(renderOcean);
 }
 
-// ====================================================================
-// [툴팁 제어]
-// ====================================================================
+// 툴팁 제어
 const tooltipEl = document.getElementById('tooltip');
 
 function showTooltip(targetEl, text) {
@@ -851,9 +849,7 @@ document.addEventListener('pointerdown', (e) => {
   }
 });
 
-// ====================================================================
-// [보드 생성 엔진: 격자판에 오직 정답 한자만 배치하고 나머지는 순수 이모티콘으로 채움]
-// ====================================================================
+// 3칸 일직선 보드 생성 엔진: 격자판에 오직 정답 한자만 배치하고 나머지는 순수 이모티콘으로 채움
 function generate3StepBoard() {
   const directions = [
     [0, 1],   // 우
@@ -918,7 +914,7 @@ function generate3StepBoard() {
 
     if (!allPlaced) continue;
 
-    // ★ 핵심: 나머지 모든 빈칸은 오직 '이모티콘' 타일로만 채웁니다 (함정 한자 0개)
+    // 나머지 모든 빈칸은 오직 '이모티콘' 타일로만 채움 (함정 한자 배제)
     const activeImoSet = new Set();
     currentActiveHanjas.forEach(q => {
       activeImoSet.add(q.firstImo);
@@ -934,7 +930,7 @@ function generate3StepBoard() {
           const rand = safeFillers[Math.floor(Math.random() * safeFillers.length)];
           testBoard[r][c] = {
             text: rand.text,
-            type: 'imo', // 무조건 이모티콘 타일
+            type: 'imo',
             desc: rand.desc,
             ownerHanja: null,
             step: 0
@@ -948,15 +944,12 @@ function generate3StepBoard() {
   }
 }
 
-// ====================================================================
-// [게임 시작 및 라운드 세팅]
-// ====================================================================
 function startNewGame() {
   hideTooltip();
   solvedInCurrentBoard = 0;
   if (HANJA_LIST.length === 0) return;
 
-  // 맞히지 않은 한자만 출제
+  // 맞히지 않은 한자만 골라서 출제
   let availablePool = HANJA_LIST.filter(item => !solvedHanjaSet.has(item.hanja));
 
   if (availablePool.length === 0) {
@@ -964,7 +957,6 @@ function startNewGame() {
     return;
   }
 
-  // 6x6 보드에는 3개 세트(한자 3개, 이모티콘 6개)가 가장 여유롭고 쾌적하게 배치됩니다
   const countToPick = Math.min(3, availablePool.length);
 
   const pool = [...availablePool];
@@ -1004,9 +996,7 @@ function renderGrid() {
   }
 }
 
-// ====================================================================
-// [조작 엔진: 탭(설명 툴팁) vs 3칸 직선 드래그 매칭]
-// ====================================================================
+// 조작 엔진: 탭(설명 툴팁) vs 3칸 직선 드래그 매칭
 const gridEl = document.getElementById('grid');
 let isPointerActive = false;
 let isDragMode = false;
