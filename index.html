@@ -195,7 +195,7 @@
     border: 1px solid rgba(56, 189, 248, 0.35);
     padding: 8px 12px;
     border-radius: 10px;
-    font-size: 11.5px;
+    font-size: 12px;
     font-weight: 500;
     line-height: 1.45;
     max-width: 240px;
@@ -439,7 +439,6 @@
     </div>
   </div>
 
-  <!-- 설정 모달 -->
   <div id="settings-modal" onclick="handleModalBgClick(event)">
     <div class="modal-content">
       <div class="modal-title">⚙️ 게임 및 바다 설정</div>
@@ -457,7 +456,6 @@
     </div>
   </div>
 
-  <!-- 전체 완료 모달 -->
   <div id="allclear-modal">
     <div class="modal-content">
       <div class="modal-title">🏆 전체 완료!</div>
@@ -478,9 +476,6 @@ function triggerVibration(pattern) {
   }
 }
 
-// ====================================================================
-// [문자열 분리 유틸: 짧은 의미 / 긴 설명 분리]
-// ====================================================================
 function splitMeaning(rawText) {
   if (!rawText) return { short: "", long: "" };
   const colonIndex = rawText.indexOf(':');
@@ -493,14 +488,10 @@ function splitMeaning(rawText) {
   return { short: rawText.trim(), long: rawText.trim() };
 }
 
-// ====================================================================
-// [구글 스프레드시트 실시간 연동]
-// ====================================================================
 const URL_DATA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCtYO07v05Ud7heXDdK7k4RCaG5i5oELPe5oBhvFw6yaKsxXzKVO1L2_Lodc89WtLgNO3T5V5a-r8v/pub?gid=0&single=true&output=csv";
 
 let HANJA_LIST = [];
 let ALL_FILLER_IMOS = [];
-// 맞힌 한자들을 누적 저장하는 세트 (중복 방지용)
 let solvedHanjaSet = new Set();
 
 function parseCSV(text) {
@@ -574,9 +565,6 @@ async function loadSheetData() {
   }
 }
 
-// ====================================================================
-// [화면 모드 관리]
-// ====================================================================
 let currentMode = localStorage.getItem('hanja_ocean_layout_mode') || 'medium';
 
 function updateLayoutUI() {
@@ -624,9 +612,6 @@ function restartLoop() {
   startNewGame();
 }
 
-// ====================================================================
-// [심해 캔버스 물리 렌더러]
-// ====================================================================
 const canvas = document.getElementById('oceanCanvas');
 const ctx = canvas.getContext('2d');
 let width, height;
@@ -730,9 +715,6 @@ let board = [];
 let cellMap = {};
 let activeTooltipTarget = null;
 
-// ====================================================================
-// [샘플 보기 기능]
-// ====================================================================
 let isSampleMode = false;
 let backupSolvedCount = 0;
 let backupQuestions = null;
@@ -1147,9 +1129,6 @@ function renderOcean(currentTime) {
   requestAnimationFrame(renderOcean);
 }
 
-// ====================================================================
-// [툴팁 관리]
-// ====================================================================
 const tooltipEl = document.getElementById('tooltip');
 
 function showTooltip(targetEl, text) {
@@ -1190,15 +1169,21 @@ function toggleTileTooltip(targetEl, text) {
   }
 }
 
-document.addEventListener('pointerdown', (e) => {
-  if (!e.target.closest('.quest-card') && !e.target.closest('.cell')) {
-    hideTooltip();
+// 모바일 바깥 터치 판정: 퀘스트 카드나 타일 터치는 닫히지 않도록 엄격 분리
+document.addEventListener('touchstart', (e) => {
+  if (e.target.closest('.quest-card') || e.target.closest('.cell') || e.target.closest('#settings-btn') || e.target.closest('#settings-modal') || e.target.closest('#allclear-modal') || e.target.closest('#next-refresh-btn')) {
+    return;
   }
+  hideTooltip();
+}, { passive: true });
+
+document.addEventListener('mousedown', (e) => {
+  if (e.target.closest('.quest-card') || e.target.closest('.cell') || e.target.closest('#settings-btn') || e.target.closest('#settings-modal') || e.target.closest('#allclear-modal') || e.target.closest('#next-refresh-btn')) {
+    return;
+  }
+  hideTooltip();
 });
 
-// ====================================================================
-// [보드 생성 엔진: 1번 이모티콘 -> 2번 이모티콘 직선 배치]
-// ====================================================================
 function generateSafeBoard() {
   const directions = [
     [0, 1],   // 우
@@ -1270,27 +1255,20 @@ function generateSafeBoard() {
   }
 }
 
-// ====================================================================
-// [새 게임 시작: 미해결 문제만 출제 & 전체 정복 체크]
-// ====================================================================
 function startNewGame() {
   hideTooltip();
   solvedCountInRound = 0;
   if (HANJA_LIST.length === 0) return;
 
-  // 1. 아직 맞히지 않은 한자만 추출
   let availablePool = HANJA_LIST.filter(item => !solvedHanjaSet.has(item.hanja));
 
-  // 2. 더 이상 출제할 한자가 없으면 전체 완료 팝업 표시
   if (availablePool.length === 0) {
     showAllClearModal();
     return;
   }
 
-  // 남은 문제가 4개 미만인 경우(예: 1~3개 남음) 남은 것만 출제
   const numToPick = Math.min(4, availablePool.length);
 
-  // 3. 피셔-예이츠 무작위 셔플
   const pool = [...availablePool];
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
@@ -1360,9 +1338,6 @@ function renderGrid() {
   }
 }
 
-// ====================================================================
-// [직선 드래그 감지 & 판정]
-// ====================================================================
 const gridEl = document.getElementById('grid');
 let isDragging = false;
 let startCell = null;
@@ -1430,7 +1405,8 @@ function handleMove(e) {
   const pt = e.touches ? e.touches[0] : e;
 
   const dist = Math.hypot(pt.clientX - startX, pt.clientY - startY);
-  if (dist > 8) {
+  // 모바일 터치 미세 흔들림 허용 범위를 14px로 확장
+  if (dist > 14) {
     if (!hasMovedFar) {
       hideTooltip();
       hasMovedFar = true;
@@ -1452,6 +1428,7 @@ function handleEnd() {
   if (!isDragging) return;
   isDragging = false;
 
+  // 손가락 터치 탭 판정: 미세 흔들림 이내일 때 짧은 설명 토글
   if (!hasMovedFar && startCell) {
     startCell.classList.remove('selected');
     toggleTileTooltip(startCell, startCell.dataset.short);
@@ -1478,7 +1455,6 @@ function handleEnd() {
         solvedCountInRound++;
         isCorrectMatch = true;
 
-        // 맞힌 한자 기록 추가 (다음 라운드 중복 제외)
         solvedHanjaSet.add(owner1);
 
         currentLineCells.forEach(c => {
@@ -1492,7 +1468,6 @@ function handleEnd() {
         const firstRect = firstCell.getBoundingClientRect();
         onCorrectWord(firstRect.left + firstRect.width / 2, firstRect.top + firstRect.height / 2);
 
-        // 현재 라운드의 모든 문제를 다 맞혔을 때
         if (solvedCountInRound === currentQuestions.length) {
           setTimeout(() => {
             triggerVibration([30, 40, 50]);
