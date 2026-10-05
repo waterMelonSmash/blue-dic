@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
-<!-- 웹뷰 및 브라우저 강제 최신 로드 (캐시 방지 메타태그) ㅇ-->
+<!-- 웹뷰 및 브라우저 강제 최신 로드 (캐시 방지 메타태그) -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -456,7 +456,6 @@ async function loadSheetData() {
 
       if (!imo1 || !imo2) continue;
 
-      // 툴팁 포맷: 한자 헤더 + [1] 이모지 설명 + [2] 이모지 설명
       const fullDesc = `한자: 【 ${hanja} 】\n[1] ${imo1} ${mean1}\n[2] ${imo2} ${mean2}`;
 
       HANJA_LIST.push({
@@ -500,7 +499,7 @@ function restartLoop() {
 }
 
 // ====================================================================
-// [심해 캔버스 물리 렌더러 (원본 물고기 물리 복원)]
+// [심해 캔버스 물리 렌더러]
 // ====================================================================
 const canvas = document.getElementById('oceanCanvas');
 const ctx = canvas.getContext('2d');
@@ -519,69 +518,31 @@ const tintCtx = tintCanvas.getContext('2d');
 const TIER_SPECS = [
   {
     tier: 3,
-    name: "대왕고래급",
-    files: [
-      "emojis/fish/fish_rank/tier3_whale1.svg",
-      "emojis/fish/fish_rank/tier3_whale2.svg",
-      "emojis/fish/fish_rank/tier3_whale3.svg"
-    ],
+    files: ["emojis/fish/fish_rank/tier3_whale1.svg", "emojis/fish/fish_rank/tier3_whale2.svg", "emojis/fish/fish_rank/tier3_whale3.svg"],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier3_FB.svg",
     emojiChar: "🐋",
-    size: 140,
-    speedMin: 0.7, speedMax: 1.0,
-    depthMaxRatio: 0.95,
-    tintAlpha: 0.35,
-    bodyAlpha: 0.95
+    size: 140, speedMin: 0.7, speedMax: 1.0, depthMaxRatio: 0.95, tintAlpha: 0.35, bodyAlpha: 0.95
   },
   {
     tier: 2,
-    name: "상어/돌고래급",
-    files: [
-      "emojis/fish/fish_rank/tier2_shark.svg",
-      "emojis/fish/fish_rank/tier2_shark2.svg",
-      "emojis/fish/fish_rank/tier2_shark3.svg",
-      "emojis/fish/fish_rank/tier2_sunfish.svg"
-    ],
+    files: ["emojis/fish/fish_rank/tier2_shark.svg", "emojis/fish/fish_rank/tier2_shark2.svg", "emojis/fish/fish_rank/tier2_shark3.svg", "emojis/fish/fish_rank/tier2_sunfish.svg"],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier2_FB.svg",
     emojiChar: "🦈",
-    size: 90,
-    speedMin: 0.7, speedMax: 1.0,
-    depthMaxRatio: 0.75,
-    tintAlpha: 0.38,
-    bodyAlpha: 0.92
+    size: 90, speedMin: 0.7, speedMax: 1.0, depthMaxRatio: 0.75, tintAlpha: 0.38, bodyAlpha: 0.92
   },
   {
     tier: 1,
-    name: "거북/가오리급",
-    files: [
-      "emojis/fish/fish_rank/tier1_jellyfish.svg",
-      "emojis/fish/fish_rank/tier1_seaturtle.svg",
-      "emojis/fish/fish_rank/tier1_squid.svg"
-    ],
+    files: ["emojis/fish/fish_rank/tier1_jellyfish.svg", "emojis/fish/fish_rank/tier1_seaturtle.svg", "emojis/fish/fish_rank/tier1_squid.svg"],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier1_FB.svg",
     emojiChar: "🐢",
-    size: 52,
-    speedMin: 0.7, speedMax: 1.0,
-    depthMaxRatio: 0.52,
-    tintAlpha: 0.42,
-    bodyAlpha: 0.90
+    size: 52, speedMin: 0.7, speedMax: 1.0, depthMaxRatio: 0.52, tintAlpha: 0.42, bodyAlpha: 0.90
   },
   {
     tier: 0,
-    name: "작은 물고기급",
-    files: [
-      "emojis/fish/fish_rank/tier0_clown_fish.svg",
-      "emojis/fish/fish_rank/tier0_fish1.svg",
-      "emojis/fish/fish_rank/tier0_fish2.svg",
-      "emojis/fish/fish_rank/tier0_shrimp.svg"
-    ],
+    files: ["emojis/fish/fish_rank/tier0_clown_fish.svg", "emojis/fish/fish_rank/tier0_fish1.svg", "emojis/fish/fish_rank/tier0_fish2.svg", "emojis/fish/fish_rank/tier0_shrimp.svg"],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier0_FB.svg",
     emojiChar: "🐟",
-    size: 32,
-    speedMin: 0.7, speedMax: 1.0,
-    depthMaxRatio: 0.32,
-    tintAlpha: 0.35,
-    bodyAlpha: 0.94
+    size: 32, speedMin: 0.7, speedMax: 1.0, depthMaxRatio: 0.32, tintAlpha: 0.35, bodyAlpha: 0.94
   }
 ];
 
@@ -593,7 +554,6 @@ TIER_SPECS.forEach(spec => {
     img.onload = () => { spec.loadedImages[idx] = img; };
     img.onerror = () => { spec.loadedImages[idx] = null; };
   });
-
   spec.loadedFallback = new Image();
   spec.loadedFallback.src = spec.fallbackFile;
 });
@@ -609,7 +569,6 @@ let board = [];
 let cellMap = {};
 let activeTooltipTarget = null;
 
-// 샘플 보기 제어
 let isSampleMode = false;
 let backupSolvedCount = 0;
 
@@ -620,12 +579,8 @@ function handleSampleClick() {
   if (!isSampleMode) {
     const inputVal = prompt("샘플로 보고 싶은 문제 개수를 입력하세요:", "9999");
     if (inputVal === null) return;
-
     const targetNum = parseInt(inputVal.trim(), 10);
-    if (isNaN(targetNum) || targetNum < 0) {
-      alert("올바른 숫자를 입력해주세요.");
-      return;
-    }
+    if (isNaN(targetNum) || targetNum < 0) return;
 
     isSampleMode = true;
     backupSolvedCount = totalSolvedCount;
@@ -633,7 +588,6 @@ function handleSampleClick() {
     header.classList.add('sample-mode');
     sampleBtn.classList.add('active');
     sampleBtn.innerText = "샘플 보기 중지 (원래대로)";
-
     syncEcosystem();
     closeSettings();
   } else {
@@ -642,7 +596,6 @@ function handleSampleClick() {
     header.classList.remove('sample-mode');
     sampleBtn.classList.remove('active');
     sampleBtn.innerText = "샘플 보기";
-
     syncEcosystem();
     closeSettings();
   }
@@ -675,11 +628,12 @@ window.addEventListener('mousedown', (e) => {
 });
 
 function calculateCreatureCounts(n) {
-  const thousands = Math.floor(n / 1000);
-  const hundreds = Math.floor((n % 1000) / 100);
-  const tens = Math.floor((n % 100) / 10);
-  const ones = n % 10;
-  return { 3: thousands, 2: hundreds, 1: tens, 0: ones };
+  return {
+    3: Math.floor(n / 1000),
+    2: Math.floor((n % 1000) / 100),
+    1: Math.floor((n % 100) / 10),
+    0: n % 10
+  };
 }
 
 function updateTierText() {
@@ -722,7 +676,6 @@ function syncEcosystem() {
       } else {
         const chosenFileIndex = Math.floor(Math.random() * spec.files.length);
         const baseSpeed = Math.random() * (spec.speedMax - spec.speedMin) + spec.speedMin;
-        
         let angle = (spec.tier === 3) ? (Math.random() * Math.PI * 2) : ((Math.random() > 0.5 ? 0 : Math.PI) + (Math.random() - 0.5) * 1.1);
         const maxInitY = height * spec.depthMaxRatio;
 
@@ -936,7 +889,7 @@ function renderOcean(currentTime) {
 }
 
 // ====================================================================
-// [툴팁 제어 - 톡 치면 즉각 반응]
+// [툴팁 제어]
 // ====================================================================
 const tooltipEl = document.getElementById('tooltip');
 
@@ -1111,6 +1064,17 @@ function renderGrid() {
       cell.dataset.step = item.step;
       cell.innerText = item.text;
 
+      // ★ 즉각 반응 클릭 리스너 연결
+      cell.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (isDraggingLine) return; // 드래그 중인 경우는 탭 무시
+        if (cell.dataset.type === 'hanja') {
+          toggleHanjaTooltip(cell, cell.dataset.desc);
+        } else {
+          hideTooltip();
+        }
+      });
+
       gridEl.appendChild(cell);
       cellMap[`${r},${c}`] = cell;
     }
@@ -1118,7 +1082,7 @@ function renderGrid() {
 }
 
 // ====================================================================
-// [조작 엔진: 탭 즉각 반응 & 3칸 일직선 드래그]
+// [조작 엔진: 탭과 드래그의 완전 분리]
 // ====================================================================
 const gridEl = document.getElementById('grid');
 let isPointerActive = false;
@@ -1178,7 +1142,6 @@ function handlePointerStart(clientX, clientY) {
   startCell = cell;
   startX = clientX;
   startY = clientY;
-  clearHighlight();
 }
 
 function handlePointerMove(clientX, clientY) {
@@ -1186,11 +1149,11 @@ function handlePointerMove(clientX, clientY) {
 
   const dist = Math.hypot(clientX - startX, clientY - startY);
 
-  // 10px 이상 움직이면 드래그 모드로 전환
-  if (dist > 10) {
+  // 손가락이 15px 이상 명확히 밀렸을 때만 '드래그 매칭 모드'로 진입
+  if (dist > 15) {
     if (!isDraggingLine) {
       isDraggingLine = true;
-      hideTooltip();
+      hideTooltip(); // 드래그 시작 시 툴팁 즉시 닫기
       currentLineCells = [startCell];
       startCell.classList.add('selected');
     }
@@ -1213,19 +1176,13 @@ function handlePointerEnd() {
   if (!isPointerActive) return;
   isPointerActive = false;
 
-  // 1) 톡 가볍게 탭한 경우: 한자 타일이면 툴팁 토글, 그 외는 닫기
-  if (!isDraggingLine && startCell) {
-    if (startCell.dataset.type === 'hanja') {
-      toggleHanjaTooltip(startCell, startCell.dataset.desc);
-    } else {
-      hideTooltip();
-    }
-    clearHighlight();
+  // 드래그가 아니었던 단순 탭의 경우: 아무것도 안 함 (위의 'click' 이벤트가 즉각 처리함)
+  if (!isDraggingLine) {
     startCell = null;
     return;
   }
 
-  // 2) 3칸 직선 드래그 완료 판정
+  // 3칸 직선 드래그 완료 판정
   let isCorrectMatch = false;
 
   if (currentLineCells.length === 3) {
@@ -1276,7 +1233,8 @@ function handlePointerEnd() {
 
   currentLineCells = [];
   startCell = null;
-  isDraggingLine = false;
+  // 클릭 이벤트와의 간섭 방지를 위해 약간의 딜레이 후 플래그 해제
+  setTimeout(() => { isDraggingLine = false; }, 50);
 }
 
 // 터치 이벤트
@@ -1301,7 +1259,7 @@ gridEl.addEventListener('mousedown', (e) => handlePointerStart(e.clientX, e.clie
 window.addEventListener('mousemove', (e) => handlePointerMove(e.clientX, e.clientY));
 window.addEventListener('mouseup', () => handlePointerEnd());
 
-// 바깥 영역 터치 시 툴팁 닫기
+// 배경 빈 곳 터치 시 툴팁 닫기
 document.addEventListener('pointerdown', (e) => {
   if (!e.target.closest('.cell') && !e.target.closest('#settings-btn') && !e.target.closest('#settings-modal') && !e.target.closest('#allclear-modal') && !e.target.closest('#next-refresh-btn')) {
     hideTooltip();
