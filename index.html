@@ -1053,17 +1053,6 @@ function renderGrid() {
       cell.dataset.step = item.step;
       cell.innerText = item.text;
 
-      // 톡 탭했을 때 즉시 툴팁 토글
-      cell.addEventListener('click', (e) => {
-        e.stopPropagation();
-        if (isDraggingLine) return;
-        if (cell.dataset.type === 'hanja') {
-          toggleHanjaTooltip(cell, cell.dataset.desc);
-        } else {
-          hideTooltip();
-        }
-      });
-
       gridEl.appendChild(cell);
       cellMap[`${r},${c}`] = cell;
     }
@@ -1164,7 +1153,15 @@ function handlePointerEnd() {
   if (!isPointerActive) return;
   isPointerActive = false;
 
+  // 가볍게 탭(터치)만 하고 뗐을 때 즉시 툴팁 표시
   if (!isDraggingLine) {
+    if (startCell) {
+      if (startCell.dataset.type === 'hanja') {
+        toggleHanjaTooltip(startCell, startCell.dataset.desc);
+      } else {
+        hideTooltip();
+      }
+    }
     startCell = null;
     return;
   }
