@@ -152,7 +152,6 @@
     font-size: 64px;
   }
 
-  /* 상단 한자 퀘스트 카드 */
   .quest-card {
     position: relative;
     overflow: hidden;
@@ -198,9 +197,10 @@
     border-radius: 10px;
     font-size: 11.5px;
     font-weight: 500;
-    line-height: 1.4;
-    max-width: 220px;
+    line-height: 1.45;
+    max-width: 240px;
     text-align: center;
+    white-space: pre-line;
     box-shadow: 0 12px 28px rgba(0,0,0,0.6);
     z-index: 9999;
     pointer-events: none;
@@ -245,7 +245,6 @@
     margin-top: 2px;
   }
 
-  /* 하단 이모티콘 셀 (순백색 타일) */
   .cell {
     width: 42px;
     height: 42px;
@@ -262,7 +261,6 @@
     transition: transform 0.12s ease, border-color 0.15s ease;
   }
 
-  /* 선택(드래그) 중: 흰 바탕 위에 투명 살구/주황 틴트 + 주황 테두리 */
   .cell.selected {
     background: linear-gradient(rgba(249, 115, 22, 0.28), rgba(249, 115, 22, 0.28)), #ffffff !important;
     border: 2px solid #f97316 !important;
@@ -270,7 +268,6 @@
     transform: scale(1.08);
   }
 
-  /* 정답 처리: 흰 바탕 위에 투명 에메랄드 틴트 + 초록 테두리 */
   .cell.matched {
     background: linear-gradient(rgba(46, 204, 113, 0.28), rgba(46, 204, 113, 0.28)), #ffffff !important;
     border: 2px solid #2ecc71 !important;
@@ -459,7 +456,22 @@ function triggerVibration(pattern) {
 }
 
 // ====================================================================
-// [구글 스프레드시트 실시간 연동 (단일 시트 5개 열 체계)]
+// [문자열 분리 유틸: 짧은 의미 / 긴 설명 분리]
+// ====================================================================
+function splitMeaning(rawText) {
+  if (!rawText) return { short: "", long: "" };
+  const colonIndex = rawText.indexOf(':');
+  if (colonIndex !== -1) {
+    return {
+      short: rawText.substring(0, colonIndex).trim(),
+      long: rawText.substring(colonIndex + 1).trim()
+    };
+  }
+  return { short: rawText.trim(), long: rawText.trim() };
+}
+
+// ====================================================================
+// [구글 스프레드시트 실시간 연동]
 // ====================================================================
 const URL_DATA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCtYO07v05Ud7heXDdK7k4RCaG5i5oELPe5oBhvFw6yaKsxXzKVO1L2_Lodc89WtLgNO3T5V5a-r8v/pub?gid=0&single=true&output=csv";
 
@@ -498,31 +510,36 @@ async function loadSheetData() {
     HANJA_LIST = [];
     ALL_FILLER_IMOS = [];
 
-    // 0행은 헤더(Hanja, First_Imo, First_Imo_Mean, Second_Imo, Second_Imo_Mean)
     for (let i = 1; i < rows.length; i++) {
       const r = rows[i];
       if (!r || !r[0] || r[0].trim() === "") continue;
 
       const hanja = r[0].trim();
       const imo1 = (r[1] || "").trim();
-      const mean1 = (r[2] || "").trim();
+      const mean1Raw = (r[2] || "").trim();
       const imo2 = (r[3] || "").trim();
-      const mean2 = (r[4] || "").trim();
+      const mean2Raw = (r[4] || "").trim();
 
       if (!imo1 || !imo2) continue;
+
+      const m1 = splitMeaning(mean1Raw);
+      const m2 = splitMeaning(mean2Raw);
 
       HANJA_LIST.push({
         hanja: hanja,
         firstImo: imo1,
-        firstMean: mean1,
+        firstShort: m1.short,
+        firstLong: m1.long,
         secondImo: imo2,
-        secondMean: mean2,
-        fullDesc: `[1] ${mean1}\n[2] ${mean2}`
+        secondShort: m2.short,
+        secondLong: m2.long,
+        // 한자 카드 꾹 누를 때: 순서와 긴 설명만 표시
+        hanjaLongDesc: `[1] ${m1.long}\n[2] ${m2.long}`
       });
 
       ALL_FILLER_IMOS.push(
-        { imo: imo1, desc: mean1 },
-        { imo: imo2, desc: mean2 }
+        { imo: imo1, shortDesc: m1.short },
+        { imo: imo2, shortDesc: m2.short }
       );
     }
 
@@ -749,7 +766,7 @@ function renderRestoredQuestions() {
       e.preventDefault();
       e.stopPropagation();
       card.classList.add('active-preview');
-      showTooltip(card, q.fullDesc);
+      showTooltip(card, q.hanjaLongDesc);
     };
 
     const handlePressEnd = (e) => {
@@ -1094,7 +1111,7 @@ function renderOcean(currentTime) {
 }
 
 // ====================================================================
-// [툴팁 관리]
+// [툴팁 관리 (토글 지원)]
 // ====================================================================
 const tooltipEl = document.getElementById('tooltip');
 
@@ -1126,6 +1143,15 @@ function showTooltip(targetEl, text) {
 function hideTooltip() {
   tooltipEl.style.display = 'none';
   activeTooltipTarget = null;
+}
+
+// 툴팁 토글: 이미 떠 있는 타일을 다시 누르면 닫히고, 다른 타일을 누르면 열림
+function toggleTileTooltip(targetEl, text) {
+  if (activeTooltipTarget === targetEl && tooltipEl.style.display === 'block') {
+    hideTooltip();
+  } else {
+    showTooltip(targetEl, text);
+  }
 }
 
 document.addEventListener('pointerdown', (e) => {
@@ -1165,17 +1191,15 @@ function generateSafeBoard() {
 
         if (endR >= 0 && endR < GRID_SIZE && endC >= 0 && endC < GRID_SIZE) {
           if (testBoard[r][c] === null && testBoard[endR][endC] === null) {
-            // (r, c) = 1번 이모티콘
             testBoard[r][c] = {
               imo: q.firstImo,
-              desc: q.firstMean,
+              shortDesc: q.firstShort,
               ownerHanja: q.hanja,
               step: 1
             };
-            // (endR, endC) = 2번 이모티콘
             testBoard[endR][endC] = {
               imo: q.secondImo,
-              desc: q.secondMean,
+              shortDesc: q.secondShort,
               ownerHanja: q.hanja,
               step: 2
             };
@@ -1188,8 +1212,6 @@ function generateSafeBoard() {
 
     if (!allPlaced) continue;
 
-    // 나머지 빈 칸 채우기 (출제되지 않은 다른 한자들의 의미 이모티콘들)
-    const currentHanjaSet = new Set(currentQuestions.map(q => q.hanja));
     let safeFillers = ALL_FILLER_IMOS.filter(f => !currentQuestions.some(q => q.firstImo === f.imo || q.secondImo === f.imo));
     if (safeFillers.length === 0) safeFillers = ALL_FILLER_IMOS;
 
@@ -1199,7 +1221,7 @@ function generateSafeBoard() {
           const rand = safeFillers[Math.floor(Math.random() * safeFillers.length)];
           testBoard[r][c] = {
             imo: rand.imo,
-            desc: rand.desc,
+            shortDesc: rand.shortDesc,
             ownerHanja: null,
             step: 0
           };
@@ -1234,13 +1256,14 @@ function startNewGame() {
     const card = document.createElement('div');
     card.className = 'quest-card';
     card.id = `quest-${q.id}`;
-    card.innerText = q.hanja; // 한자 낱글자 표시
+    card.innerText = q.hanja;
 
+    // 한자 카드 꾹 누를 때: 순서와 긴 설명만 표시
     const handlePressStart = (e) => {
       e.preventDefault();
       e.stopPropagation();
       card.classList.add('active-preview');
-      showTooltip(card, q.fullDesc);
+      showTooltip(card, q.hanjaLongDesc);
     };
 
     const handlePressEnd = (e) => {
@@ -1278,10 +1301,10 @@ function renderGrid() {
       cell.dataset.row = r;
       cell.dataset.col = c;
       cell.dataset.imo = item.imo;
-      cell.dataset.desc = item.desc;
+      cell.dataset.short = item.shortDesc; // 타일은 짧은 의미만 저장
       cell.dataset.owner = item.ownerHanja || "";
       cell.dataset.step = item.step;
-      cell.innerText = item.imo; // 유니코드 이모티콘 텍스트 그대로 렌더링
+      cell.innerText = item.imo;
 
       gridEl.appendChild(cell);
       cellMap[`${r},${c}`] = cell;
@@ -1290,7 +1313,7 @@ function renderGrid() {
 }
 
 // ====================================================================
-// [직선 드래그 감지 및 순서 엄격 판정]
+// [직선 드래그 감지 & 짧은 설명 토글 판정]
 // ====================================================================
 const gridEl = document.getElementById('grid');
 let isDragging = false;
@@ -1381,15 +1404,16 @@ function handleEnd() {
   if (!isDragging) return;
   isDragging = false;
 
+  // 드래그 없이 타일을 탭(클릭)한 경우: 짧은 설명 토글
   if (!hasMovedFar && startCell) {
     startCell.classList.remove('selected');
-    showTooltip(startCell, startCell.dataset.desc);
+    toggleTileTooltip(startCell, startCell.dataset.short);
     currentLineCells = [];
     startCell = null;
     return;
   }
 
-  // 정확히 2개 타일 드래그 & 순서 검증 (1번 이모티콘 -> 2번 이모티콘)
+  // 2개 타일 직선 드래그 매칭 판정 (1번 -> 2번 정방향)
   let isCorrectMatch = false;
 
   if (currentLineCells.length === 2) {
@@ -1401,7 +1425,6 @@ function handleEnd() {
     const step1 = parseInt(firstCell.dataset.step);
     const step2 = parseInt(secondCell.dataset.step);
 
-    // 같은 한자에 속해 있고, 반드시 1번 -> 2번 순서로 이어졌는지 확인
     if (owner1 && owner1 === owner2 && step1 === 1 && step2 === 2) {
       const matchedQuest = currentQuestions.find(q => q.hanja === owner1 && !q.isFound);
       if (matchedQuest) {
