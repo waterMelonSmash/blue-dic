@@ -2,6 +2,11 @@
 <html lang="ko">
 <head>
 <meta charset="UTF-8">
+<!-- 웹뷰 및 브라우저 강제 최신 로드 (캐시 방지 메타태그) -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
 <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>푸른 바다 한자 퍼즐</title>
 
@@ -15,7 +20,7 @@
   }
 
   body {
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
     display: flex;
     flex-direction: column;
     align-items: center;
@@ -74,29 +79,26 @@
     flex-direction: column;
     align-items: center;
     width: 100%;
-    max-width: 360px;
+    max-width: 380px;
     transition: all 0.3s ease;
   }
 
   .ocean-header {
-    display: none;
+    display: flex;
     flex-direction: column;
     align-items: center;
-    background: rgba(15, 23, 42, 0.45);
-    border: 1px solid rgba(56, 189, 248, 0.3);
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(56, 189, 248, 0.35);
     backdrop-filter: blur(10px);
-    padding: 5px 14px;
-    border-radius: 18px;
-    margin-bottom: 8px;
+    padding: 7px 16px;
+    border-radius: 20px;
+    margin-bottom: 12px;
     box-shadow: 0 4px 18px rgba(2, 132, 199, 0.25);
-  }
-  .ocean-header.visible {
-    display: flex;
   }
   .ocean-header .fish-count {
     color: #38bdf8;
     font-weight: 800;
-    font-size: 13px;
+    font-size: 13.5px;
     letter-spacing: 0.3px;
     text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
   }
@@ -106,122 +108,9 @@
   }
   .ocean-header .tier-info {
     color: #bae6fd;
-    font-size: 10.5px;
-    margin-top: 2px;
-    opacity: 0.9;
-  }
-
-  .quest-container {
-    display: grid;
-    margin-bottom: 8px;
-    justify-content: center;
-    position: relative;
-    transition: all 0.3s ease;
-  }
-
-  .quest-container.mode-small {
-    grid-template-columns: repeat(4, 60px);
-    gap: 8px;
-  }
-  .quest-container.mode-small .quest-card {
-    width: 60px;
-    height: 60px;
-    border-radius: 12px;
-  }
-  .quest-container.mode-small .quest-overlay {
     font-size: 11px;
-    font-weight: 900;
-    padding: 10px 0 4px 0;
-  }
-
-  .quest-container.mode-medium {
-    grid-template-columns: repeat(2, 108px);
-    gap: 9px;
-  }
-  .quest-container.mode-medium .quest-card {
-    width: 108px;
-    height: 108px;
-    border-radius: 15px;
-  }
-  .quest-container.mode-medium .quest-overlay {
-    font-size: 20px;
-    font-weight: 900;
-    padding: 16px 0 5px 0;
-    letter-spacing: 2px;
-  }
-
-  .quest-container.mode-large {
-    grid-template-columns: repeat(2, 125px);
-    gap: 12px;
-  }
-  .quest-container.mode-large .quest-card {
-    width: 125px;
-    height: 125px;
-    border-radius: 16px;
-  }
-  .quest-container.mode-large .quest-overlay {
-    font-size: 24px;
-    font-weight: 900;
-    padding: 18px 0 6px 0;
-    letter-spacing: 2.5px;
-  }
-
-  .quest-card {
-    position: relative;
-    overflow: hidden;
-    box-shadow: 0 6px 20px rgba(0,0,0,0.45);
-    border: 2px solid rgba(255, 255, 255, 0.3);
-    cursor: pointer;
-    background: rgba(12, 74, 110, 0.5);
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: border-color 0.25s ease, box-shadow 0.25s ease;
-  }
-
-  .quest-card img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-    pointer-events: none;
-    transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  .quest-card .quest-overlay {
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    background: linear-gradient(to top, rgba(8, 47, 73, 0.95), transparent);
-    color: #ffffff;
-    text-align: center;
-    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95);
-    pointer-events: none;
-    transition: opacity 0.2s ease;
-  }
-
-  .quest-card.active-preview {
-    border-color: #38bdf8;
-    box-shadow: 0 0 20px rgba(56, 189, 248, 0.7);
-    z-index: 10;
-  }
-  .quest-card.active-preview img {
-    transform: scale(1.1);
-  }
-  .quest-card.active-preview .quest-overlay {
-    opacity: 0;
-  }
-
-  .quest-card.found {
-    border-color: #2ecc71;
-    box-shadow: 0 0 18px rgba(46, 204, 113, 0.7);
-    animation: cardSuccessPop 0.45s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-  @keyframes cardSuccessPop {
-    0% { transform: scale(1); }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); }
+    margin-top: 3px;
+    opacity: 0.9;
   }
 
   #tooltip {
@@ -229,15 +118,16 @@
     position: fixed;
     background: #082f49;
     color: #f0fdf4;
-    border: 1px solid rgba(56, 189, 248, 0.35);
-    padding: 7px 11px;
-    border-radius: 10px;
-    font-size: 11.5px;
+    border: 1.5px solid rgba(56, 189, 248, 0.5);
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: 13px;
     font-weight: 500;
-    line-height: 1.35;
-    max-width: 190px;
-    text-align: center;
-    box-shadow: 0 12px 28px rgba(0,0,0,0.6);
+    line-height: 1.55;
+    max-width: 270px;
+    text-align: left;
+    white-space: pre-line;
+    box-shadow: 0 14px 32px rgba(0,0,0,0.75);
     z-index: 9999;
     pointer-events: none;
     animation: fadeIn 0.15s ease-out;
@@ -266,75 +156,76 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
+  /* 6x6 격자판 */
   #grid {
     display: grid;
-    grid-template-columns: repeat(6, 40px);
-    grid-template-rows: repeat(6, 40px);
-    gap: 5px;
-    background: rgba(8, 47, 73, 0.25);
-    backdrop-filter: blur(4px);
-    -webkit-backdrop-filter: blur(4px);
-    border: 1px solid rgba(56, 189, 248, 0.15);
-    padding: 8px;
-    border-radius: 16px;
-    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-    margin-top: 2px;
+    grid-template-columns: repeat(6, 50px);
+    grid-template-rows: repeat(6, 50px);
+    gap: 6px;
+    background: rgba(8, 47, 73, 0.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1.5px solid rgba(56, 189, 248, 0.25);
+    padding: 9px;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    touch-action: none;
   }
 
   .cell {
-    width: 40px;
-    height: 40px;
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(255, 255, 255, 0.08);
-    border-radius: 9px;
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    transition: background 0.15s, transform 0.12s;
-    font-size: 17px;
-    font-weight: bold;
-    color: #e2e8f0;
+    line-height: 1;
+    transition: transform 0.12s ease, border-color 0.15s ease, background 0.15s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   }
 
+  /* 1) 정답 한자 타일: 라운드당 5개만 파란 타일 */
+  .cell.type-hanja {
+    background: linear-gradient(135deg, #0284c7, #075985);
+    border: 2px solid #38bdf8;
+    color: #ffffff;
+    font-size: 26px;
+    font-weight: 800;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  }
+
+  /* 2) 이모티콘 타일: 순백색 타일 */
+  .cell.type-imo {
+    background: #ffffff;
+    border: 1px solid #ffffff;
+    font-size: 26px;
+  }
+
+  /* 선택 상태 */
   .cell.selected {
-    background: rgba(249, 115, 22, 0.45);
-    outline: 2px solid #f97316;
-    transform: scale(1.05);
-  }
-
-  .cell.matched {
-    background: rgba(46, 204, 113, 0.6);
-    border-color: #2ecc71;
-    animation: jellyPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
-  }
-
-  .cell.has-icon {
-    background: #ffffff !important;
-    border: 1px solid #ffffff !important;
-    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.35);
-  }
-
-  .cell img {
-    width: 28px;
-    height: 28px;
-    object-fit: contain;
-    pointer-events: none;
-  }
-
-  .cell.has-icon.selected {
-    background: linear-gradient(rgba(249, 115, 22, 0.28), rgba(249, 115, 22, 0.28)), #ffffff !important;
-    border: 2px solid #f97316 !important;
-    outline: none !important;
-    box-shadow: 0 0 10px rgba(249, 115, 22, 0.7), 0 2px 6px rgba(0, 0, 0, 0.35) !important;
+    border: 2.5px solid #f97316 !important;
+    box-shadow: 0 0 12px rgba(249, 115, 22, 0.85) !important;
     transform: scale(1.08);
   }
+  .cell.type-hanja.selected {
+    background: linear-gradient(135deg, #ea580c, #c2410c) !important;
+  }
+  .cell.type-imo.selected {
+    background: linear-gradient(rgba(249, 115, 22, 0.3), rgba(249, 115, 22, 0.3)), #ffffff !important;
+  }
 
-  .cell.has-icon.matched {
-    background: linear-gradient(rgba(46, 204, 113, 0.25), rgba(46, 204, 113, 0.25)), #ffffff !important;
-    border: 2px solid #2ecc71 !important;
-    outline: none !important;
-    box-shadow: 0 0 12px rgba(46, 204, 113, 0.8) !important;
+  /* 정답 완료 상태 */
+  .cell.matched {
+    border: 2.5px solid #2ecc71 !important;
+    box-shadow: 0 0 14px rgba(46, 204, 113, 0.9) !important;
+    animation: jellyPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .cell.type-hanja.matched {
+    background: linear-gradient(135deg, #16a34a, #15803d) !important;
+  }
+  .cell.type-imo.matched {
+    background: linear-gradient(rgba(46, 204, 113, 0.3), rgba(46, 204, 113, 0.3)), #ffffff !important;
   }
 
   @keyframes jellyPop {
@@ -344,28 +235,28 @@
   }
 
   #next-refresh-btn {
-    margin-top: 10px;
-    width: 36px;
-    height: 36px;
+    margin-top: 14px;
+    width: 38px;
+    height: 38px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    opacity: 0.45;
+    opacity: 0.5;
     transition: opacity 0.2s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
   }
   #next-refresh-btn:active {
-    opacity: 0.9;
-    transform: rotate(180deg) scale(0.9);
+    opacity: 1;
+    transform: rotate(180deg) scale(0.92);
   }
   #next-refresh-btn svg {
-    width: 24px;
-    height: 24px;
+    width: 25px;
+    height: 25px;
     fill: #ffffff;
     filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.5));
   }
 
-  #settings-modal {
+  #settings-modal, #allclear-modal {
     display: none;
     position: fixed;
     top: 0;
@@ -373,63 +264,41 @@
     width: 100vw;
     height: 100vh;
     height: 100dvh;
-    background: rgba(2, 6, 23, 0.6);
+    background: rgba(2, 6, 23, 0.65);
     backdrop-filter: blur(6px);
     -webkit-backdrop-filter: blur(6px);
     z-index: 100;
     align-items: center;
     justify-content: center;
   }
-  #settings-modal.active {
+  #settings-modal.active, #allclear-modal.active {
     display: flex;
   }
 
   .modal-content {
-    background: rgba(15, 23, 42, 0.9);
+    background: rgba(15, 23, 42, 0.95);
     border: 1px solid rgba(56, 189, 248, 0.35);
     border-radius: 20px;
-    padding: 20px 18px;
+    padding: 22px 20px;
     width: 85%;
-    max-width: 280px;
+    max-width: 290px;
     box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 12px;
+    text-align: center;
   }
 
   .modal-title {
-    font-size: 14px;
+    font-size: 15px;
     font-weight: bold;
     color: #64ffda;
-    text-align: center;
   }
 
-  .mode-select-label {
-    font-size: 11.5px;
-    color: #93c5fd;
-    margin-bottom: -4px;
-    text-align: center;
-  }
-  .size-btn-group {
-    display: flex;
-    gap: 6px;
-    width: 100%;
-  }
-  .size-btn {
-    flex: 1;
-    padding: 9px 0;
-    background: rgba(14, 116, 144, 0.3);
+  .allclear-desc {
+    font-size: 13px;
     color: #bae6fd;
-    border: 1px solid rgba(56, 189, 248, 0.25);
-    border-radius: 10px;
-    font-size: 12px;
-    font-weight: 700;
-    cursor: pointer;
-  }
-  .size-btn.active {
-    background: rgba(56, 189, 248, 0.38);
-    border-color: #38bdf8;
-    color: #ffffff;
+    line-height: 1.5;
   }
 
   .modal-btn {
@@ -438,12 +307,18 @@
     color: #e0f2fe;
     border: 1px solid rgba(56, 189, 248, 0.3);
     border-radius: 10px;
-    font-size: 12px;
+    font-size: 12.5px;
     font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
+  }
+  .modal-btn.primary {
+    background: #0284c7;
+    border-color: #38bdf8;
+    color: #ffffff;
+    font-weight: bold;
   }
   .modal-btn.sample {
     background: rgba(245, 158, 11, 0.3);
@@ -479,11 +354,10 @@
       <div class="tier-info" id="tierInfoDisplay">생태계: 바다가 조용합니다</div>
     </div>
 
-    <div class="quest-container" id="questList"></div>
     <div id="tooltip"></div>
     <div id="grid"></div>
 
-    <div id="next-refresh-btn" onclick="startNewGame()" title="다음 문제로 넘어가기">
+    <div id="next-refresh-btn" onclick="startNewGame()" title="새로운 배치로 새로고침">
       <svg viewBox="0 0 24 24">
         <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0 0 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 0 0 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
       </svg>
@@ -493,17 +367,19 @@
   <div id="settings-modal" onclick="handleModalBgClick(event)">
     <div class="modal-content">
       <div class="modal-title">⚙️ 게임 및 바다 설정</div>
-      
-      <div class="mode-select-label">화면 레이아웃 모드</div>
-      <div class="size-btn-group">
-        <button class="size-btn" id="btn-mode-small" onclick="setGameMode('small')">소</button>
-        <button class="size-btn" id="btn-mode-medium" onclick="setGameMode('medium')">중</button>
-        <button class="size-btn" id="btn-mode-large" onclick="setGameMode('large')">대</button>
-      </div>
-
       <button class="modal-btn sample" id="sampleBtn" onclick="handleSampleClick()">샘플 보기</button>
       <button class="modal-btn reset" onclick="execAction(resetOcean)">바다 초기화</button>
       <button class="modal-btn close" onclick="closeSettings()">닫기</button>
+    </div>
+  </div>
+
+  <div id="allclear-modal">
+    <div class="modal-content">
+      <div class="modal-title">🏆 전체 완료!</div>
+      <div class="allclear-desc">
+        시트에 등록된 모든 한자를<br>성공적으로 정복하셨습니다! 🌊
+      </div>
+      <button class="modal-btn primary" onclick="restartLoop()">처음부터 다시 풀기</button>
     </div>
   </div>
 
@@ -517,15 +393,24 @@ function triggerVibration(pattern) {
   }
 }
 
-// ====================================================================
-// [구글 스프레드시트 연동: 낱글자 gid=0, 단어 gid=1022283958]
-// ====================================================================
-const URL_HANJA_DATA = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCtYO07v05Ud7heXDdK7k4RCaG5i5oELPe5oBhvFw6yaKsxXzKVO1L2_Lodc89WtLgNO3T5V5a-r8v/pub?gid=0&single=true&output=csv";
-const URL_WORD_DATA  = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCtYO07v05Ud7heXDdK7k4RCaG5i5oELPe5oBhvFw6yaKsxXzKVO1L2_Lodc89WtLgNO3T5V5a-r8v/pub?gid=1022283958&single=true&output=csv";
+function containsHanja(str) {
+  return /[\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF]/.test(str);
+}
 
-let HANJA_DICT = {};
-let WORD_DATABASE = [];
-let ALL_DICT_KEYS = [];
+// ====================================================================
+// [구글 시트 연동]
+// ====================================================================
+const URL_DATA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCtYO07v05Ud7heXDdK7k4RCaG5i5oELPe5oBhvFw6yaKsxXzKVO1L2_Lodc89WtLgNO3T5V5a-r8v/pub?gid=0&single=true&output=csv";
+
+let HANJA_LIST = [];
+let ALL_FILLER_IMOS = [];
+let solvedHanjaSet = new Set();
+
+const DEFAULT_OCEAN_EMOJIS = [
+  { text: "🌊" }, { text: "🐟" }, { text: "🐬" }, { text: "🐳" },
+  { text: "🐙" }, { text: "🦀" }, { text: "🪸" }, { text: "🐚" },
+  { text: "🫧" }, { text: "🐢" }
+];
 
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
@@ -549,48 +434,44 @@ function parseCSV(text) {
   });
 }
 
-// 시트에 실제로 적혀 있는 글자만 읽어오는 핵심 함수
 async function loadSheetData() {
   try {
     const cacheBuster = `&_cb=${Date.now()}`;
-    const [resHanja, resWord] = await Promise.all([
-      fetch(URL_HANJA_DATA + cacheBuster),
-      fetch(URL_WORD_DATA + cacheBuster)
-    ]);
+    const res = await fetch(URL_DATA_SHEET + cacheBuster);
+    const text = await res.text();
+    const rows = parseCSV(text);
 
-    const textHanja = await resHanja.text();
-    const textWord = await resWord.text();
+    HANJA_LIST = [];
+    ALL_FILLER_IMOS = [];
 
-    const rowsHanja = parseCSV(textHanja);
-    const rowsWord = parseCSV(textWord);
-
-    HANJA_DICT = {};
-    for (let i = 1; i < rowsHanja.length; i++) {
-      const r = rowsHanja[i];
-      // 빈 줄이나 A열이 비어있는 행은 완전히 무시
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
       if (!r || !r[0] || r[0].trim() === "") continue;
 
-      const char = r[0].trim();
-      HANJA_DICT[char] = {
-        file: (r[1] || "").trim(),
-        desc: (r[2] || "").trim(),
-        fallback: char
-      };
-    }
-    // 현재 시트에 등록된 유효한 낱글자만 등록
-    ALL_DICT_KEYS = Object.keys(HANJA_DICT);
+      const hanja = r[0].trim();
+      const imo1 = (r[1] || "").trim();
+      const mean1 = (r[2] || "").trim();
+      const imo2 = (r[3] || "").trim();
+      const mean2 = (r[4] || "").trim();
 
-    WORD_DATABASE = [];
-    for (let i = 1; i < rowsWord.length; i++) {
-      const r = rowsWord[i];
-      if (!r || !r[0] || r[0].trim() === "") continue;
+      if (!imo1 || !imo2) continue;
 
-      WORD_DATABASE.push({
-        hanja: r[0].trim(),
-        desc: (r[1] || "").trim(),
-        file: (r[2] || "").trim(),
-        fallback: r[0].trim()
+      // 한자 머리말 + 이모지 + 설명 전체 포맷 복원
+      const fullDesc = `한자: 【 ${hanja} 】\n[1] ${imo1} ${mean1}\n[2] ${imo2} ${mean2}`;
+
+      HANJA_LIST.push({
+        hanja: hanja,
+        firstImo: imo1,
+        secondImo: imo2,
+        hanjaFullDesc: fullDesc
       });
+
+      if (!containsHanja(imo1)) ALL_FILLER_IMOS.push({ text: imo1 });
+      if (!containsHanja(imo2)) ALL_FILLER_IMOS.push({ text: imo2 });
+    }
+
+    if (ALL_FILLER_IMOS.length === 0) {
+      ALL_FILLER_IMOS = [...DEFAULT_OCEAN_EMOJIS];
     }
 
     return true;
@@ -600,46 +481,26 @@ async function loadSheetData() {
   }
 }
 
-// ====================================================================
-// [화면 모드 관리]
-// ====================================================================
-let currentMode = localStorage.getItem('hanja_ocean_layout_mode') || 'medium';
-
-function updateLayoutUI() {
-  const header = document.getElementById('oceanHeader');
-  const questList = document.getElementById('questList');
-
-  questList.classList.remove('mode-small', 'mode-medium', 'mode-large');
-  document.querySelectorAll('.size-btn').forEach(btn => btn.classList.remove('active'));
-
-  const activeBtn = document.getElementById(`btn-mode-${currentMode}`);
-  if (activeBtn) activeBtn.classList.add('active');
-
-  if (currentMode === 'small') {
-    header.classList.add('visible');
-    questList.classList.add('mode-small');
-  } else if (currentMode === 'medium') {
-    header.classList.add('visible');
-    questList.classList.add('mode-medium');
-  } else if (currentMode === 'large') {
-    header.classList.remove('visible');
-    questList.classList.add('mode-large');
-  }
-}
-
-function setGameMode(mode) {
-  currentMode = mode;
-  localStorage.setItem('hanja_ocean_layout_mode', mode);
-  updateLayoutUI();
-}
-
+// 모달 제어
 function openSettings() { document.getElementById('settings-modal').classList.add('active'); }
 function closeSettings() { document.getElementById('settings-modal').classList.remove('active'); }
 function handleModalBgClick(e) { if (e.target.id === 'settings-modal') closeSettings(); }
 function execAction(fn) { closeSettings(); fn(); }
 
+function showAllClearModal() {
+  document.getElementById('allclear-modal').classList.add('active');
+  triggerVibration([100, 80, 150]);
+  spawnBubbles(width * 0.5, height * 0.6, 60, true, true);
+}
+
+function restartLoop() {
+  document.getElementById('allclear-modal').classList.remove('active');
+  solvedHanjaSet.clear();
+  startNewGame();
+}
+
 // ====================================================================
-// [심해 캔버스 물리 렌더러]
+// [심해 캔버스 물리 렌더러 (원본 완벽 복원)]
 // ====================================================================
 const canvas = document.getElementById('oceanCanvas');
 const ctx = canvas.getContext('2d');
@@ -665,6 +526,7 @@ const TIER_SPECS = [
       "emojis/fish/fish_rank/tier3_whale3.svg"
     ],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier3_FB.svg",
+    emojiChar: "🐋",
     size: 140,
     speedMin: 0.7, speedMax: 1.0,
     depthMaxRatio: 0.95,
@@ -681,6 +543,7 @@ const TIER_SPECS = [
       "emojis/fish/fish_rank/tier2_sunfish.svg"
     ],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier2_FB.svg",
+    emojiChar: "🦈",
     size: 90,
     speedMin: 0.7, speedMax: 1.0,
     depthMaxRatio: 0.75,
@@ -696,6 +559,7 @@ const TIER_SPECS = [
       "emojis/fish/fish_rank/tier1_squid.svg"
     ],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier1_FB.svg",
+    emojiChar: "🐢",
     size: 52,
     speedMin: 0.7, speedMax: 1.0,
     depthMaxRatio: 0.52,
@@ -712,6 +576,7 @@ const TIER_SPECS = [
       "emojis/fish/fish_rank/tier0_shrimp.svg"
     ],
     fallbackFile: "emojis/fish/fish_fallback/fish_tier0_FB.svg",
+    emojiChar: "🐟",
     size: 32,
     speedMin: 0.7, speedMax: 1.0,
     depthMaxRatio: 0.32,
@@ -738,20 +603,15 @@ let swimmingCreatures = [];
 let bubbles = [];
 
 const GRID_SIZE = 6;
-let currentQuestions = [];
-let solvedCountInRound = 0;
+let currentActiveHanjas = [];
+let solvedInCurrentBoard = 0;
 let board = [];
 let cellMap = {};
 let activeTooltipTarget = null;
 
-// ====================================================================
-// [샘플 보기 기능]
-// ====================================================================
+// 샘플 보기 제어
 let isSampleMode = false;
 let backupSolvedCount = 0;
-let backupQuestions = null;
-let backupBoard = null;
-let backupSolvedInRound = 0;
 
 function handleSampleClick() {
   const sampleBtn = document.getElementById('sampleBtn');
@@ -769,10 +629,6 @@ function handleSampleClick() {
 
     isSampleMode = true;
     backupSolvedCount = totalSolvedCount;
-    backupQuestions = JSON.parse(JSON.stringify(currentQuestions));
-    backupBoard = JSON.parse(JSON.stringify(board));
-    backupSolvedInRound = solvedCountInRound;
-
     totalSolvedCount = targetNum;
     header.classList.add('sample-mode');
     sampleBtn.classList.add('active');
@@ -783,17 +639,6 @@ function handleSampleClick() {
   } else {
     isSampleMode = false;
     totalSolvedCount = backupSolvedCount;
-
-    if (backupQuestions && backupBoard) {
-      currentQuestions = JSON.parse(JSON.stringify(backupQuestions));
-      board = JSON.parse(JSON.stringify(backupBoard));
-      solvedCountInRound = backupSolvedInRound;
-      
-      renderRestoredQuestions();
-      renderGrid();
-      restoreMatchedCells();
-    }
-
     header.classList.remove('sample-mode');
     sampleBtn.classList.remove('active');
     sampleBtn.innerText = "샘플 보기";
@@ -801,60 +646,6 @@ function handleSampleClick() {
     syncEcosystem();
     closeSettings();
   }
-}
-
-function renderRestoredQuestions() {
-  const questListEl = document.getElementById('questList');
-  questListEl.innerHTML = '';
-  currentQuestions.forEach(q => {
-    const card = document.createElement('div');
-    card.className = 'quest-card' + (q.isFound ? ' found' : '');
-    card.id = `quest-${q.id}`;
-
-    card.innerHTML = `
-      <img src="${q.file}" alt="${q.hanja}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-      <div style="display:none; width:100%; height:100%; align-items:center; justify-content:center; font-size:32px; margin-bottom:6px;">${q.fallback}</div>
-      <div class="quest-overlay">${q.hanja}</div>
-    `;
-
-    const handlePressStart = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      card.classList.add('active-preview');
-      showTooltip(card, q.desc);
-    };
-
-    const handlePressEnd = (e) => {
-      e.preventDefault();
-      card.classList.remove('active-preview');
-      hideTooltip();
-    };
-
-    card.addEventListener('mousedown', handlePressStart);
-    card.addEventListener('mouseup', handlePressEnd);
-    card.addEventListener('mouseleave', handlePressEnd);
-    card.addEventListener('touchstart', handlePressStart, { passive: false });
-    card.addEventListener('touchend', handlePressEnd, { passive: false });
-    card.addEventListener('touchcancel', handlePressEnd, { passive: false });
-
-    questListEl.appendChild(card);
-  });
-}
-
-function restoreMatchedCells() {
-  currentQuestions.forEach(q => {
-    if (q.isFound) {
-      const chars = q.hanja.split('');
-      for (let r = 0; r < GRID_SIZE; r++) {
-        for (let c = 0; c < GRID_SIZE; c++) {
-          if (chars.includes(board[r][c])) {
-            const cell = cellMap[`${r},${c}`];
-            if (cell) cell.classList.add('matched');
-          }
-        }
-      }
-    }
-  });
 }
 
 function spawnBubbles(x, y, count, isBig = false, reachSurface = false) {
@@ -873,14 +664,14 @@ function spawnBubbles(x, y, count, isBig = false, reachSurface = false) {
 }
 
 window.addEventListener('touchstart', (e) => {
-  if (e.target.closest('#grid') || e.target.closest('.quest-card') || e.target.closest('#settings-btn') || e.target.closest('#settings-modal') || e.target.closest('#next-refresh-btn')) return;
+  if (e.target.closest('#grid') || e.target.closest('#settings-btn') || e.target.closest('#settings-modal') || e.target.closest('#allclear-modal') || e.target.closest('#next-refresh-btn')) return;
   e.preventDefault();
   const touch = e.touches[0];
   spawnBubbles(touch.clientX, touch.clientY, Math.floor(Math.random() * 3) + 5, false, false);
 }, { passive: false });
 
 window.addEventListener('mousedown', (e) => {
-  if (e.target.closest('#grid') || e.target.closest('.quest-card') || e.target.closest('#settings-btn') || e.target.closest('#settings-modal') || e.target.closest('#next-refresh-btn')) return;
+  if (e.target.closest('#grid') || e.target.closest('#settings-btn') || e.target.closest('#settings-modal') || e.target.closest('#allclear-modal') || e.target.closest('#next-refresh-btn')) return;
   spawnBubbles(e.clientX, e.clientY, Math.floor(Math.random() * 3) + 5, false, false);
 });
 
@@ -950,6 +741,7 @@ function syncEcosystem() {
           size: spec.size,
           bodyAlpha: spec.bodyAlpha,
           tintAlpha: spec.tintAlpha,
+          emojiChar: spec.emojiChar,
           x: Math.random() * width,
           y: Math.random() * maxInitY,
           vx: Math.cos(angle) * baseSpeed,
@@ -996,6 +788,7 @@ function resetOcean() {
       sBtn.innerText = "샘플 보기";
     }
     totalSolvedCount = 0;
+    solvedHanjaSet.clear();
     localStorage.removeItem('hanja_ocean_fish_count');
     bubbles = [];
     syncEcosystem();
@@ -1013,6 +806,17 @@ const ambientBubbles = Array.from({ length: 24 }, () => ({
 }));
 
 let lastRenderTime = performance.now();
+
+function drawFallbackEmoji(ctx, size, emojiChar) {
+  ctx.save();
+  ctx.font = `${Math.floor(size * 0.85)}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = 'rgba(56, 189, 248, 0.4)';
+  ctx.shadowBlur = 8;
+  ctx.fillText(emojiChar, 0, 0);
+  ctx.restore();
+}
 
 function renderOcean(currentTime) {
   const dt = Math.min((currentTime - lastRenderTime) / 1000, 0.1);
@@ -1128,6 +932,8 @@ function renderOcean(currentTime) {
       tintCtx.fillRect(0, 0, s, s);
 
       ctx.drawImage(tintCanvas, -s / 2, -s / 2, s, s);
+    } else {
+      drawFallbackEmoji(ctx, c.size, c.emojiChar);
     }
 
     ctx.restore();
@@ -1165,9 +971,7 @@ function renderOcean(currentTime) {
   requestAnimationFrame(renderOcean);
 }
 
-// ====================================================================
-// [툴팁 및 격자판 조작]
-// ====================================================================
+// 툴팁 제어
 const tooltipEl = document.getElementById('tooltip');
 
 function showTooltip(targetEl, text) {
@@ -1200,47 +1004,78 @@ function hideTooltip() {
   activeTooltipTarget = null;
 }
 
+function toggleHanjaTooltip(targetEl, text) {
+  if (activeTooltipTarget === targetEl && tooltipEl.style.display === 'block') {
+    hideTooltip();
+  } else {
+    showTooltip(targetEl, text);
+  }
+}
+
 document.addEventListener('pointerdown', (e) => {
-  if (!e.target.closest('.quest-card') && !e.target.closest('.cell')) {
+  if (!e.target.closest('.cell') && !e.target.closest('#settings-btn') && !e.target.closest('#settings-modal') && !e.target.closest('#allclear-modal') && !e.target.closest('#next-refresh-btn')) {
     hideTooltip();
   }
 });
 
-// 시트에 적힌 한자만 엄격하게 사용해서 보드 채우기
-function generateSafeBoard() {
-  const directions = [[0, 1], [1, 0], [1, 1], [-1, 1], [0, -1], [1, -1]];
-  const sortedWords = [...currentQuestions].sort((a, b) => b.hanja.length - a.hanja.length);
+// ====================================================================
+// [3칸 일직선 보드 생성 엔진: 5개 정답 한자 세트 배치]
+// ====================================================================
+function generate3StepBoard() {
+  const directions = [
+    [0, 1],   // 우
+    [1, 0],   // 하
+    [1, 1],   // 우하 대각선
+    [-1, 1],  // 우상 대각선
+    [0, -1],  // 좌
+    [-1, 0],  // 상
+    [-1, -1], // 좌상 대각선
+    [1, -1]   // 좌하 대각선
+  ];
 
-  const answerChars = new Set(sortedWords.flatMap(q => q.hanja.split('')));
-  let safeFillKeys = ALL_DICT_KEYS.filter(char => !answerChars.has(char));
-  if (safeFillKeys.length === 0) safeFillKeys = ALL_DICT_KEYS;
-
-  for (let layoutAttempt = 0; layoutAttempt < 100; layoutAttempt++) {
+  for (let layoutAttempt = 0; layoutAttempt < 300; layoutAttempt++) {
     let testBoard = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(null));
     let allPlaced = true;
 
-    for (const q of sortedWords) {
+    for (const q of currentActiveHanjas) {
       let placed = false;
-      let tries = 80;
+      let tries = 120;
       while (!placed && tries-- > 0) {
         const [dr, dc] = directions[Math.floor(Math.random() * directions.length)];
         const r = Math.floor(Math.random() * GRID_SIZE);
         const c = Math.floor(Math.random() * GRID_SIZE);
-        const endR = r + dr * (q.hanja.length - 1);
-        const endC = c + dc * (q.hanja.length - 1);
+        
+        const r2 = r + dr;
+        const c2 = c + dc;
+        const r3 = r + dr * 2;
+        const c3 = c + dc * 2;
 
-        if (endR >= 0 && endR < GRID_SIZE && endC >= 0 && endC < GRID_SIZE) {
-          let canPlace = true;
-          for (let i = 0; i < q.hanja.length; i++) {
-            if (testBoard[r + dr * i][c + dc * i] !== null) {
-              canPlace = false;
-              break;
-            }
-          }
-          if (canPlace) {
-            for (let i = 0; i < q.hanja.length; i++) {
-              testBoard[r + dr * i][c + dc * i] = q.hanja[i];
-            }
+        if (r3 >= 0 && r3 < GRID_SIZE && c3 >= 0 && c3 < GRID_SIZE) {
+          if (testBoard[r][c] === null && testBoard[r2][c2] === null && testBoard[r3][c3] === null) {
+            // 1단계: 정답 한자 타일 (파란색, 전체 설명 보유)
+            testBoard[r][c] = {
+              text: q.hanja,
+              type: 'hanja',
+              desc: q.hanjaFullDesc,
+              ownerHanja: q.hanja,
+              step: 1
+            };
+            // 2단계: 1번 이모티콘 (흰색, 툴팁 없음)
+            testBoard[r2][c2] = {
+              text: q.firstImo,
+              type: 'imo',
+              desc: "",
+              ownerHanja: q.hanja,
+              step: 2
+            };
+            // 3단계: 2번 이모티콘 (흰색, 툴팁 없음)
+            testBoard[r3][c3] = {
+              text: q.secondImo,
+              type: 'imo',
+              desc: "",
+              ownerHanja: q.hanja,
+              step: 3
+            };
             placed = true;
           }
         }
@@ -1250,11 +1085,27 @@ function generateSafeBoard() {
 
     if (!allPlaced) continue;
 
-    // 빈 칸은 시트에 실제로 존재하는 글자로만 채움
+    // 나머지 빈칸은 오직 '이모티콘' 타일로만 채움 (함정 한자 배제)
+    const activeImoSet = new Set();
+    currentActiveHanjas.forEach(q => {
+      activeImoSet.add(q.firstImo);
+      activeImoSet.add(q.secondImo);
+    });
+
+    let safeFillers = ALL_FILLER_IMOS.filter(f => !activeImoSet.has(f.text) && !containsHanja(f.text));
+    if (safeFillers.length === 0) safeFillers = DEFAULT_OCEAN_EMOJIS;
+
     for (let r = 0; r < GRID_SIZE; r++) {
       for (let c = 0; c < GRID_SIZE; c++) {
         if (testBoard[r][c] === null) {
-          testBoard[r][c] = safeFillKeys[Math.floor(Math.random() * safeFillKeys.length)];
+          const rand = safeFillers[Math.floor(Math.random() * safeFillers.length)];
+          testBoard[r][c] = {
+            text: rand.text,
+            type: 'imo',
+            desc: "",
+            ownerHanja: null,
+            step: 0
+          };
         }
       }
     }
@@ -1262,74 +1113,36 @@ function generateSafeBoard() {
     board = testBoard;
     return;
   }
-
-  // 예외 시에도 시트에 존재하는 글자만 사용
-  let fallbackBoard = Array.from({ length: GRID_SIZE }, () => 
-    Array.from({ length: GRID_SIZE }, () => safeFillKeys[Math.floor(Math.random() * safeFillKeys.length)])
-  );
-  sortedWords.forEach((q, rowIdx) => {
-    if (rowIdx < GRID_SIZE) {
-      for (let i = 0; i < q.hanja.length && i < GRID_SIZE; i++) {
-        fallbackBoard[rowIdx][i] = q.hanja[i];
-      }
-    }
-  });
-  board = fallbackBoard;
 }
 
+// ====================================================================
+// [게임 시작: 정답 한자 5개 고정 출제]
+// ====================================================================
 function startNewGame() {
   hideTooltip();
-  solvedCountInRound = 0;
-  if (WORD_DATABASE.length === 0) return;
+  solvedInCurrentBoard = 0;
+  if (HANJA_LIST.length === 0) return;
 
-  // 피셔-예이츠 무작위 셔플
-  const pool = [...WORD_DATABASE];
+  let availablePool = HANJA_LIST.filter(item => !solvedHanjaSet.has(item.hanja));
+
+  if (availablePool.length === 0) {
+    showAllClearModal();
+    return;
+  }
+
+  const TARGET_HANJA_COUNT = 5;
+  const countToPick = Math.min(TARGET_HANJA_COUNT, availablePool.length);
+
+  const pool = [...availablePool];
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
     [pool[i], pool[j]] = [pool[j], pool[i]];
   }
 
-  currentQuestions = pool.slice(0, 4).map((q, idx) => ({ ...q, id: `q_${idx}`, isFound: false }));
+  currentActiveHanjas = pool.slice(0, countToPick).map(q => ({ ...q, isFound: false }));
 
-  const questListEl = document.getElementById('questList');
-  questListEl.innerHTML = '';
-  currentQuestions.forEach(q => {
-    const card = document.createElement('div');
-    card.className = 'quest-card';
-    card.id = `quest-${q.id}`;
-
-    card.innerHTML = `
-      <img src="${q.file}" alt="${q.hanja}" onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
-      <div style="display:none; width:100%; height:100%; align-items:center; justify-content:center; font-size:32px; margin-bottom:6px;">${q.fallback}</div>
-      <div class="quest-overlay">${q.hanja}</div>
-    `;
-
-    const handlePressStart = (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      card.classList.add('active-preview');
-      showTooltip(card, q.desc);
-    };
-
-    const handlePressEnd = (e) => {
-      e.preventDefault();
-      card.classList.remove('active-preview');
-      hideTooltip();
-    };
-
-    card.addEventListener('mousedown', handlePressStart);
-    card.addEventListener('mouseup', handlePressEnd);
-    card.addEventListener('mouseleave', handlePressEnd);
-    card.addEventListener('touchstart', handlePressStart, { passive: false });
-    card.addEventListener('touchend', handlePressEnd, { passive: false });
-    card.addEventListener('touchcancel', handlePressEnd, { passive: false });
-
-    questListEl.appendChild(card);
-  });
-
-  generateSafeBoard();
+  generate3StepBoard();
   renderGrid();
-  updateLayoutUI();
 }
 
 function renderGrid() {
@@ -1339,41 +1152,31 @@ function renderGrid() {
 
   for (let r = 0; r < GRID_SIZE; r++) {
     for (let c = 0; c < GRID_SIZE; c++) {
-      const char = board[r][c];
-      const charData = HANJA_DICT[char] || { file: "", fallback: char, desc: "설명 없음" };
+      const item = board[r][c];
 
       const cell = document.createElement('div');
-      cell.className = 'cell';
+      cell.className = `cell type-${item.type}`;
       cell.dataset.row = r;
       cell.dataset.col = c;
-      cell.dataset.char = char;
-      cell.dataset.desc = charData.desc;
+      cell.dataset.text = item.text;
+      cell.dataset.desc = item.desc || "";
+      cell.dataset.type = item.type;
+      cell.dataset.owner = item.ownerHanja || "";
+      cell.dataset.step = item.step;
+      cell.innerText = item.text;
 
-      if (charData.file) {
-        cell.classList.add('has-icon');
-      }
-
-      const imgEl = document.createElement('img');
-      imgEl.src = charData.file;
-      imgEl.alt = char;
-      imgEl.onerror = function() {
-        this.style.display = 'none';
-        cell.classList.remove('has-icon');
-        cell.innerText = charData.fallback || char;
-      };
-
-      cell.appendChild(imgEl);
       gridEl.appendChild(cell);
       cellMap[`${r},${c}`] = cell;
     }
   }
 }
 
+// 조작 엔진: 한자 탭(설명 툴팁) vs 3칸 직선 드래그 매칭
 const gridEl = document.getElementById('grid');
-let isDragging = false;
+let isPointerActive = false;
+let isDragMode = false;
 let startCell = null;
 let startX = 0, startY = 0;
-let hasMovedFar = false;
 let currentLineCells = [];
 
 function getCellFromPoint(x, y) {
@@ -1415,35 +1218,35 @@ function calculateStraightLine(start, current) {
   return line;
 }
 
-function handleStart(e) {
-  const pt = e.touches ? e.touches[0] : e;
-  const cell = getCellFromPoint(pt.clientX, pt.clientY);
+function onTouchStart(clientX, clientY) {
+  const cell = getCellFromPoint(clientX, clientY);
   if (!cell) return;
 
-  isDragging = true;
-  hasMovedFar = false;
+  isPointerActive = true;
+  isDragMode = false;
   startCell = cell;
-  startX = pt.clientX;
-  startY = pt.clientY;
-
+  startX = clientX;
+  startY = clientY;
   clearHighlight();
-  currentLineCells = [cell];
-  cell.classList.add('selected');
 }
 
-function handleMove(e) {
-  if (!isDragging || !startCell) return;
-  const pt = e.touches ? e.touches[0] : e;
+function onTouchMove(clientX, clientY) {
+  if (!isPointerActive || !startCell) return;
 
-  const dist = Math.hypot(pt.clientX - startX, pt.clientY - startY);
-  if (dist > 8) {
-    if (!hasMovedFar) {
+  const dist = Math.hypot(clientX - startX, clientY - startY);
+
+  if (dist > 12) {
+    if (!isDragMode) {
+      isDragMode = true;
       hideTooltip();
-      hasMovedFar = true;
+      currentLineCells = [startCell];
+      startCell.classList.add('selected');
     }
   }
 
-  const hoverCell = getCellFromPoint(pt.clientX, pt.clientY);
+  if (!isDragMode) return;
+
+  const hoverCell = getCellFromPoint(clientX, clientY);
   if (!hoverCell) return;
 
   const newLine = calculateStraightLine(startCell, hoverCell);
@@ -1454,59 +1257,95 @@ function handleMove(e) {
   }
 }
 
-function handleEnd() {
-  if (!isDragging) return;
-  isDragging = false;
+function onTouchEnd() {
+  if (!isPointerActive) return;
+  isPointerActive = false;
 
-  if (!hasMovedFar && startCell) {
-    startCell.classList.remove('selected');
-    showTooltip(startCell, startCell.dataset.desc);
-    currentLineCells = [];
+  // 1) 드래그 없이 탭한 경우: 한자 타일만 툴팁 토글
+  if (!isDragMode && startCell) {
+    if (startCell.dataset.type === 'hanja') {
+      toggleHanjaTooltip(startCell, startCell.dataset.desc);
+    } else {
+      hideTooltip();
+    }
+    clearHighlight();
     startCell = null;
     return;
   }
 
-  const draggedChars = currentLineCells.map(c => c.dataset.char).join('');
-  const matched = currentQuestions.find(q => q.hanja === draggedChars && !q.isFound);
+  // 2) 3칸 일직선 드래그 매칭 판정 [한자(1) -> 의미1(2) -> 의미2(3)]
+  let isCorrectMatch = false;
 
-  if (matched) {
-    matched.isFound = true;
-    solvedCountInRound++;
+  if (currentLineCells.length === 3) {
+    const c1 = currentLineCells[0];
+    const c2 = currentLineCells[1];
+    const c3 = currentLineCells[2];
 
-    currentLineCells.forEach(c => {
-      c.classList.remove('selected');
-      c.classList.add('matched');
-    });
+    const owner = c1.dataset.owner;
+    const step1 = parseInt(c1.dataset.step);
+    const step2 = parseInt(c2.dataset.step);
+    const step3 = parseInt(c3.dataset.step);
 
-    const targetCard = document.getElementById(`quest-${matched.id}`);
-    if (targetCard) targetCard.classList.add('found');
+    if (owner && owner === c2.dataset.owner && owner === c3.dataset.owner &&
+        step1 === 1 && step2 === 2 && step3 === 3) {
+      
+      const targetQuest = currentActiveHanjas.find(q => q.hanja === owner && !q.isFound);
+      if (targetQuest) {
+        targetQuest.isFound = true;
+        solvedInCurrentBoard++;
+        isCorrectMatch = true;
 
-    const firstCellRect = currentLineCells[0].getBoundingClientRect();
-    onCorrectWord(firstCellRect.left + firstCellRect.width / 2, firstCellRect.top + firstCellRect.height / 2);
+        solvedHanjaSet.add(owner);
 
-    if (solvedCountInRound === 4) {
-      setTimeout(() => {
-        triggerVibration([30, 40, 50]);
-        for (let i = 0; i < 4; i++) {
-          spawnBubbles(width * (0.2 + i * 0.2), height * 0.8, 16, true, true);
+        currentLineCells.forEach(c => {
+          c.classList.remove('selected');
+          c.classList.add('matched');
+        });
+
+        const firstRect = c1.getBoundingClientRect();
+        onCorrectWord(firstRect.left + firstRect.width / 2, firstRect.top + firstRect.height / 2);
+
+        if (solvedInCurrentBoard === currentActiveHanjas.length) {
+          setTimeout(() => {
+            triggerVibration([30, 40, 50]);
+            for (let i = 0; i < 4; i++) {
+              spawnBubbles(width * (0.2 + i * 0.2), height * 0.8, 16, true, true);
+            }
+            startNewGame();
+          }, 850);
         }
-        startNewGame();
-      }, 900);
+      }
     }
-  } else {
-    currentLineCells.forEach(c => c.classList.remove('selected'));
+  }
+
+  if (!isCorrectMatch) {
+    clearHighlight();
   }
 
   currentLineCells = [];
   startCell = null;
+  isDragMode = false;
 }
 
-gridEl.addEventListener('mousedown', handleStart);
-window.addEventListener('mousemove', handleMove);
-window.addEventListener('mouseup', handleEnd);
-gridEl.addEventListener('touchstart', handleStart, { passive: true });
-window.addEventListener('touchmove', handleMove, { passive: true });
-window.addEventListener('touchend', handleEnd, { passive: true });
+gridEl.addEventListener('mousedown', (e) => onTouchStart(e.clientX, e.clientY));
+window.addEventListener('mousemove', (e) => onTouchMove(e.clientX, e.clientY));
+window.addEventListener('mouseup', () => onTouchEnd());
+
+gridEl.addEventListener('touchstart', (e) => {
+  const touch = e.touches[0];
+  onTouchStart(touch.clientX, touch.clientY);
+}, { passive: true });
+
+window.addEventListener('touchmove', (e) => {
+  if (!isPointerActive) return;
+  const touch = e.touches[0];
+  onTouchMove(touch.clientX, touch.clientY);
+}, { passive: true });
+
+window.addEventListener('touchend', () => {
+  if (!isPointerActive) return;
+  onTouchEnd();
+}, { passive: true });
 
 async function initGameApp() {
   const success = await loadSheetData();
@@ -1514,9 +1353,8 @@ async function initGameApp() {
     syncEcosystem();
     requestAnimationFrame(renderOcean);
     startNewGame();
-    updateLayoutUI();
   } else {
-    alert("구글 시트 데이터를 불러오는 데 실패했습니다.");
+    alert("구글 시트 데이터를 불러오지 못했습니다.");
   }
 }
 
