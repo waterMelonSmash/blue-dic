@@ -154,6 +154,7 @@
     to { opacity: 1; transform: translateY(0); }
   }
 
+  /* 6x6 격자판 */
   #grid {
     display: grid;
     grid-template-columns: repeat(6, 50px);
@@ -182,7 +183,7 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   }
 
-  /* 정답 한자 타일 */
+  /* 1) 정답 한자 타일: 라운드당 정확히 5개만 파란색 타일로 노출 */
   .cell.type-hanja {
     background: linear-gradient(135deg, #0284c7, #075985);
     border: 2px solid #38bdf8;
@@ -192,14 +193,14 @@
     text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
   }
 
-  /* 이모티콘 타일 */
+  /* 2) 이모티콘 타일: 순백색 타일 */
   .cell.type-imo {
     background: #ffffff;
     border: 1px solid #ffffff;
     font-size: 26px;
   }
 
-  /* 선택 중 */
+  /* 선택 상태 */
   .cell.selected {
     border: 2.5px solid #f97316 !important;
     box-shadow: 0 0 12px rgba(249, 115, 22, 0.85) !important;
@@ -212,7 +213,7 @@
     background: linear-gradient(rgba(249, 115, 22, 0.3), rgba(249, 115, 22, 0.3)), #ffffff !important;
   }
 
-  /* 정답 완료 */
+  /* 정답 완료 상태 */
   .cell.matched {
     border: 2.5px solid #2ecc71 !important;
     box-shadow: 0 0 14px rgba(46, 204, 113, 0.9) !important;
@@ -389,6 +390,11 @@ function triggerVibration(pattern) {
   }
 }
 
+// 한자(CJK Unified Ideographs) 포함 여부 검사
+function containsHanja(str) {
+  return /[\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF]/.test(str);
+}
+
 function splitMeaning(rawText) {
   if (!rawText) return { short: "", long: "" };
   const colonIndex = rawText.indexOf(':');
@@ -406,6 +412,20 @@ const URL_DATA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCtYO07
 let HANJA_LIST = [];
 let ALL_FILLER_IMOS = [];
 let solvedHanjaSet = new Set();
+
+// 기본 안전 해양 이모티콘 풀 (시트 이모티콘 열에 한자가 잘못 적혀있을 때 대체용)
+const DEFAULT_OCEAN_EMOJIS = [
+  { text: "🌊", type: "imo", desc: "바다 물결" },
+  { text: "🐟", type: "imo", desc: "작은 물고기" },
+  { text: "🐬", type: "imo", desc: "돌고래" },
+  { text: "🐳", type: "imo", desc: "고래" },
+  { text: "🐙", type: "imo", desc: "문어" },
+  { text: "🦀", type: "imo", desc: "게" },
+  { text: "🪸", type: "imo", desc: "산호초" },
+  { text: "🐚", type: "imo", desc: "조개껍데기" },
+  { text: "🫧", type: "imo", desc: "방울" },
+  { text: "🐢", type: "imo", desc: "바다거북" }
+];
 
 function parseCSV(text) {
   const lines = text.trim().split(/\r?\n/);
@@ -465,10 +485,17 @@ async function loadSheetData() {
         hanjaFullDesc: `[1] ${m1.long}\n[2] ${m2.long}`
       });
 
-      ALL_FILLER_IMOS.push(
-        { text: imo1, type: 'imo', desc: m1.short },
-        { text: imo2, type: 'imo', desc: m2.short }
-      );
+      // 빈칸을 채울 때는 '한자 글자'가 절대 섞이지 않도록 정규식으로 엄격 차단
+      if (!containsHanja(imo1)) {
+        ALL_FILLER_IMOS.push({ text: imo1, type: 'imo', desc: m1.short });
+      }
+      if (!containsHanja(imo2)) {
+        ALL_FILLER_IMOS.push({ text: imo2, type: 'imo', desc: m2.short });
+      }
+    }
+
+    if (ALL_FILLER_IMOS.length === 0) {
+      ALL_FILLER_IMOS = [...DEFAULT_OCEAN_EMOJIS];
     }
 
     return true;
@@ -495,6 +522,7 @@ function restartLoop() {
   startNewGame();
 }
 
+// 심해 배경 캔버스 물리
 const canvas = document.getElementById('oceanCanvas');
 const ctx = canvas.getContext('2d');
 let width, height;
@@ -849,7 +877,9 @@ document.addEventListener('pointerdown', (e) => {
   }
 });
 
-// 3칸 일직선 보드 생성 엔진: 격자판에 오직 정답 한자만 배치하고 나머지는 순수 이모티콘으로 채움
+// ====================================================================
+// [3칸 일직선 보드 생성 엔진: 5개 정답 한자 세트 배치]
+// ====================================================================
 function generate3StepBoard() {
   const directions = [
     [0, 1],   // 우
@@ -862,13 +892,13 @@ function generate3StepBoard() {
     [1, -1]   // 좌하 대각선
   ];
 
-  for (let layoutAttempt = 0; layoutAttempt < 100; layoutAttempt++) {
+  for (let layoutAttempt = 0; layoutAttempt < 300; layoutAttempt++) {
     let testBoard = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(null));
     let allPlaced = true;
 
     for (const q of currentActiveHanjas) {
       let placed = false;
-      let tries = 80;
+      let tries = 120;
       while (!placed && tries-- > 0) {
         const [dr, dc] = directions[Math.floor(Math.random() * directions.length)];
         const r = Math.floor(Math.random() * GRID_SIZE);
@@ -914,15 +944,15 @@ function generate3StepBoard() {
 
     if (!allPlaced) continue;
 
-    // 나머지 모든 빈칸은 오직 '이모티콘' 타일로만 채움 (함정 한자 배제)
+    // 나머지 모든 빈칸은 오직 '이모티콘' 타일로만 채움 (함정 한자 원천 차단)
     const activeImoSet = new Set();
     currentActiveHanjas.forEach(q => {
       activeImoSet.add(q.firstImo);
       activeImoSet.add(q.secondImo);
     });
 
-    let safeFillers = ALL_FILLER_IMOS.filter(f => !activeImoSet.has(f.text));
-    if (safeFillers.length === 0) safeFillers = ALL_FILLER_IMOS;
+    let safeFillers = ALL_FILLER_IMOS.filter(f => !activeImoSet.has(f.text) && !containsHanja(f.text));
+    if (safeFillers.length === 0) safeFillers = DEFAULT_OCEAN_EMOJIS;
 
     for (let r = 0; r < GRID_SIZE; r++) {
       for (let c = 0; c < GRID_SIZE; c++) {
@@ -944,12 +974,15 @@ function generate3StepBoard() {
   }
 }
 
+// ====================================================================
+// [게임 시작: 정답 한자 5개 고정 출제]
+// ====================================================================
 function startNewGame() {
   hideTooltip();
   solvedInCurrentBoard = 0;
   if (HANJA_LIST.length === 0) return;
 
-  // 맞히지 않은 한자만 골라서 출제
+  // 아직 맞히지 않은 한자만 추출
   let availablePool = HANJA_LIST.filter(item => !solvedHanjaSet.has(item.hanja));
 
   if (availablePool.length === 0) {
@@ -957,7 +990,9 @@ function startNewGame() {
     return;
   }
 
-  const countToPick = Math.min(3, availablePool.length);
+  // ★ 정답 한자 개수: 5개로 고정 (남은 한자가 5개 미만이면 남은 전체 출제)
+  const TARGET_HANJA_COUNT = 5;
+  const countToPick = Math.min(TARGET_HANJA_COUNT, availablePool.length);
 
   const pool = [...availablePool];
   for (let i = pool.length - 1; i > 0; i--) {
@@ -1126,6 +1161,7 @@ function onTouchEnd() {
         const firstRect = c1.getBoundingClientRect();
         onCorrectWord(firstRect.left + firstRect.width / 2, firstRect.top + firstRect.height / 2);
 
+        // 5개 한자를 모두 맞히면 다음 판 시작
         if (solvedInCurrentBoard === currentActiveHanjas.length) {
           setTimeout(() => {
             triggerVibration([30, 40, 50]);
