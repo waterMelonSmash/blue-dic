@@ -1,0 +1,1326 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<!-- 웹뷰 및 브라우저 강제 최신 로드 (캐시 방지 메타태그) ㅇ-->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>푸른 바다 한자 퍼즐</title>
+
+<style>
+  * { 
+    box-sizing: border-box;
+    -webkit-touch-callout: none !important;
+    -webkit-tap-highlight-color: transparent !important;
+    user-select: none !important;
+    -webkit-user-select: none !important;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+    margin: 0;
+    padding: calc(10px + env(safe-area-inset-top)) 8px calc(14px + env(safe-area-inset-bottom)) 8px;
+    touch-action: none;
+    position: relative;
+    overflow: hidden;
+    background: radial-gradient(ellipse at 50% 0%, #0369a1 0%, #082f49 55%, #020617 100%);
+    color: #f0fdf4;
+  }
+
+  #oceanCanvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  #settings-btn {
+    position: fixed;
+    top: calc(14px + env(safe-area-inset-top));
+    right: 14px;
+    z-index: 20;
+    width: 36px;
+    height: 36px;
+    background: rgba(15, 23, 42, 0.45);
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 17px;
+    color: #bae6fd;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.35);
+    transition: transform 0.2s ease, background 0.2s ease;
+  }
+  #settings-btn:active {
+    transform: scale(0.9) rotate(45deg);
+    background: rgba(14, 116, 144, 0.7);
+  }
+
+  .game-container {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    max-width: 380px;
+    transition: all 0.3s ease;
+  }
+
+  .ocean-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: rgba(15, 23, 42, 0.55);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    backdrop-filter: blur(10px);
+    padding: 7px 16px;
+    border-radius: 20px;
+    margin-bottom: 12px;
+    box-shadow: 0 4px 18px rgba(2, 132, 199, 0.25);
+  }
+  .ocean-header .fish-count {
+    color: #38bdf8;
+    font-weight: 800;
+    font-size: 13.5px;
+    letter-spacing: 0.3px;
+    text-shadow: 0 0 10px rgba(56, 189, 248, 0.6);
+  }
+  .ocean-header.sample-mode .fish-count {
+    color: #facc15;
+    text-shadow: 0 0 12px rgba(250, 204, 21, 0.7);
+  }
+  .ocean-header .tier-info {
+    color: #bae6fd;
+    font-size: 11px;
+    margin-top: 3px;
+    opacity: 0.9;
+  }
+
+  #tooltip {
+    display: none;
+    position: fixed;
+    background: #082f49;
+    color: #f0fdf4;
+    border: 1.5px solid rgba(56, 189, 248, 0.5);
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 500;
+    line-height: 1.55;
+    max-width: 270px;
+    text-align: left;
+    white-space: pre-line;
+    box-shadow: 0 14px 32px rgba(0,0,0,0.75);
+    z-index: 9999;
+    pointer-events: none;
+    animation: fadeIn 0.15s ease-out;
+  }
+  #tooltip::after {
+    content: '';
+    position: absolute;
+    border-width: 6px;
+    border-style: solid;
+  }
+  #tooltip.top::after {
+    top: 100%;
+    left: var(--arrow-left, 50%);
+    transform: translateX(-50%);
+    border-color: #082f49 transparent transparent transparent;
+  }
+  #tooltip.bottom::after {
+    bottom: 100%;
+    left: var(--arrow-left, 50%);
+    transform: translateX(-50%);
+    border-color: transparent transparent #082f49 transparent;
+  }
+
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-4px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  /* 6x6 격자판 */
+  #grid {
+    display: grid;
+    grid-template-columns: repeat(6, 50px);
+    grid-template-rows: repeat(6, 50px);
+    gap: 6px;
+    background: rgba(8, 47, 73, 0.35);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    border: 1.5px solid rgba(56, 189, 248, 0.25);
+    padding: 9px;
+    border-radius: 18px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
+    touch-action: none;
+  }
+
+  .cell {
+    width: 50px;
+    height: 50px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    line-height: 1;
+    transition: transform 0.12s ease, border-color 0.15s ease, background 0.15s ease;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  }
+
+  /* 1) 정답 한자 타일 */
+  .cell.type-hanja {
+    background: linear-gradient(135deg, #0284c7, #075985);
+    border: 2px solid #38bdf8;
+    color: #ffffff;
+    font-size: 26px;
+    font-weight: 800;
+    text-shadow: 0 2px 6px rgba(0, 0, 0, 0.6);
+  }
+
+  /* 2) 이모티콘 타일 */
+  .cell.type-imo {
+    background: #ffffff;
+    border: 1px solid #ffffff;
+    font-size: 26px;
+  }
+
+  /* 선택 상태 */
+  .cell.selected {
+    border: 2.5px solid #f97316 !important;
+    box-shadow: 0 0 12px rgba(249, 115, 22, 0.85) !important;
+    transform: scale(1.08);
+  }
+  .cell.type-hanja.selected {
+    background: linear-gradient(135deg, #ea580c, #c2410c) !important;
+  }
+  .cell.type-imo.selected {
+    background: linear-gradient(rgba(249, 115, 22, 0.3), rgba(249, 115, 22, 0.3)), #ffffff !important;
+  }
+
+  /* 정답 완료 상태 */
+  .cell.matched {
+    border: 2.5px solid #2ecc71 !important;
+    box-shadow: 0 0 14px rgba(46, 204, 113, 0.9) !important;
+    animation: jellyPop 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .cell.type-hanja.matched {
+    background: linear-gradient(135deg, #16a34a, #15803d) !important;
+  }
+  .cell.type-imo.matched {
+    background: linear-gradient(rgba(46, 204, 113, 0.3), rgba(46, 204, 113, 0.3)), #ffffff !important;
+  }
+
+  @keyframes jellyPop {
+    0% { transform: scale(0.9); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+  }
+
+  #next-refresh-btn {
+    margin-top: 14px;
+    width: 38px;
+    height: 38px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0.5;
+    transition: opacity 0.2s ease, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  #next-refresh-btn:active {
+    opacity: 1;
+    transform: rotate(180deg) scale(0.92);
+  }
+  #next-refresh-btn svg {
+    width: 25px;
+    height: 25px;
+    fill: #ffffff;
+    filter: drop-shadow(0 2px 5px rgba(0, 0, 0, 0.5));
+  }
+
+  #settings-modal, #allclear-modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    background: rgba(2, 6, 23, 0.65);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+    z-index: 100;
+    align-items: center;
+    justify-content: center;
+  }
+  #settings-modal.active, #allclear-modal.active {
+    display: flex;
+  }
+
+  .modal-content {
+    background: rgba(15, 23, 42, 0.95);
+    border: 1px solid rgba(56, 189, 248, 0.35);
+    border-radius: 20px;
+    padding: 22px 20px;
+    width: 85%;
+    max-width: 290px;
+    box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .modal-title {
+    font-size: 15px;
+    font-weight: bold;
+    color: #64ffda;
+  }
+
+  .allclear-desc {
+    font-size: 13px;
+    color: #bae6fd;
+    line-height: 1.5;
+  }
+
+  .modal-btn {
+    padding: 11px;
+    background: rgba(14, 116, 144, 0.4);
+    color: #e0f2fe;
+    border: 1px solid rgba(56, 189, 248, 0.3);
+    border-radius: 10px;
+    font-size: 12.5px;
+    font-weight: 600;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-btn.primary {
+    background: #0284c7;
+    border-color: #38bdf8;
+    color: #ffffff;
+    font-weight: bold;
+  }
+  .modal-btn.sample {
+    background: rgba(245, 158, 11, 0.3);
+    border-color: rgba(245, 158, 11, 0.5);
+    color: #fef08a;
+  }
+  .modal-btn.sample.active {
+    background: rgba(239, 68, 68, 0.3);
+    border-color: rgba(239, 68, 68, 0.5);
+    color: #fca5a5;
+  }
+  .modal-btn.reset {
+    background: rgba(239, 68, 68, 0.25);
+    border-color: rgba(239, 68, 68, 0.4);
+    color: #fca5a5;
+  }
+  .modal-btn.close {
+    background: transparent;
+    border: none;
+    color: #94a3b8;
+  }
+</style>
+</head>
+<body>
+
+  <canvas id="oceanCanvas"></canvas>
+
+  <div id="settings-btn" onclick="openSettings()">⚙️</div>
+
+  <div class="game-container">
+    <div class="ocean-header" id="oceanHeader">
+      <div class="fish-count" id="fishTotalText">🌊 누적 달성: <span id="fishTotalDisplay">0</span>문제</div>
+      <div class="tier-info" id="tierInfoDisplay">생태계: 바다가 조용합니다</div>
+    </div>
+
+    <div id="tooltip"></div>
+    <div id="grid"></div>
+
+    <div id="next-refresh-btn" onclick="startNewGame()" title="새로운 배치로 새로고침">
+      <svg viewBox="0 0 24 24">
+        <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46A7.93 7.93 0 0 0 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74A7.93 7.93 0 0 0 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
+      </svg>
+    </div>
+  </div>
+
+  <div id="settings-modal" onclick="handleModalBgClick(event)">
+    <div class="modal-content">
+      <div class="modal-title">⚙️ 게임 및 바다 설정</div>
+      <button class="modal-btn sample" id="sampleBtn" onclick="handleSampleClick()">샘플 보기</button>
+      <button class="modal-btn reset" onclick="execAction(resetOcean)">바다 초기화</button>
+      <button class="modal-btn close" onclick="closeSettings()">닫기</button>
+    </div>
+  </div>
+
+  <div id="allclear-modal">
+    <div class="modal-content">
+      <div class="modal-title">🏆 전체 완료!</div>
+      <div class="allclear-desc">
+        시트에 등록된 모든 한자를<br>성공적으로 정복하셨습니다! 🌊
+      </div>
+      <button class="modal-btn primary" onclick="restartLoop()">처음부터 다시 풀기</button>
+    </div>
+  </div>
+
+<script>
+window.addEventListener('contextmenu', (e) => e.preventDefault());
+document.addEventListener('selectstart', (e) => e.preventDefault());
+
+function triggerVibration(pattern) {
+  if (navigator.vibrate) {
+    try { navigator.vibrate(pattern); } catch (err) {}
+  }
+}
+
+function containsHanja(str) {
+  return /[\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF]/.test(str);
+}
+
+// ====================================================================
+// [구글 시트 연동]
+// ====================================================================
+const URL_DATA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCtYO07v05Ud7heXDdK7k4RCaG5i5oELPe5oBhvFw6yaKsxXzKVO1L2_Lodc89WtLgNO3T5V5a-r8v/pub?gid=0&single=true&output=csv";
+
+let HANJA_LIST = [];
+let ALL_FILLER_IMOS = [];
+let solvedHanjaSet = new Set();
+
+const DEFAULT_OCEAN_EMOJIS = [
+  { text: "🌊" }, { text: "🐟" }, { text: "🐬" }, { text: "🐳" },
+  { text: "🐙" }, { text: "🦀" }, { text: "🪸" }, { text: "🐚" },
+  { text: "🫧" }, { text: "🐢" }
+];
+
+function parseCSV(text) {
+  const lines = text.trim().split(/\r?\n/);
+  return lines.map(line => {
+    const row = [];
+    let insideQuote = false;
+    let entry = '';
+    for (let i = 0; i < line.length; i++) {
+      const char = line[i];
+      if (char === '"') {
+        insideQuote = !insideQuote;
+      } else if (char === ',' && !insideQuote) {
+        row.push(entry.trim());
+        entry = '';
+      } else {
+        entry += char;
+      }
+    }
+    row.push(entry.trim());
+    return row;
+  });
+}
+
+async function loadSheetData() {
+  try {
+    const cacheBuster = `&_cb=${Date.now()}`;
+    const res = await fetch(URL_DATA_SHEET + cacheBuster);
+    const text = await res.text();
+    const rows = parseCSV(text);
+
+    HANJA_LIST = [];
+    ALL_FILLER_IMOS = [];
+
+    for (let i = 1; i < rows.length; i++) {
+      const r = rows[i];
+      if (!r || !r[0] || r[0].trim() === "") continue;
+
+      const hanja = r[0].trim();
+      const imo1 = (r[1] || "").trim();
+      const mean1 = (r[2] || "").trim();
+      const imo2 = (r[3] || "").trim();
+      const mean2 = (r[4] || "").trim();
+
+      if (!imo1 || !imo2) continue;
+
+      // 툴팁 포맷: 한자 헤더 + [1] 이모지 설명 + [2] 이모지 설명
+      const fullDesc = `한자: 【 ${hanja} 】\n[1] ${imo1} ${mean1}\n[2] ${imo2} ${mean2}`;
+
+      HANJA_LIST.push({
+        hanja: hanja,
+        firstImo: imo1,
+        secondImo: imo2,
+        hanjaFullDesc: fullDesc
+      });
+
+      if (!containsHanja(imo1)) ALL_FILLER_IMOS.push({ text: imo1 });
+      if (!containsHanja(imo2)) ALL_FILLER_IMOS.push({ text: imo2 });
+    }
+
+    if (ALL_FILLER_IMOS.length === 0) {
+      ALL_FILLER_IMOS = [...DEFAULT_OCEAN_EMOJIS];
+    }
+
+    return true;
+  } catch (err) {
+    console.error("데이터 로드 실패:", err);
+    return false;
+  }
+}
+
+// 모달 제어
+function openSettings() { document.getElementById('settings-modal').classList.add('active'); }
+function closeSettings() { document.getElementById('settings-modal').classList.remove('active'); }
+function handleModalBgClick(e) { if (e.target.id === 'settings-modal') closeSettings(); }
+function execAction(fn) { closeSettings(); fn(); }
+
+function showAllClearModal() {
+  document.getElementById('allclear-modal').classList.add('active');
+  triggerVibration([100, 80, 150]);
+  spawnBubbles(width * 0.5, height * 0.6, 60, true, true);
+}
+
+function restartLoop() {
+  document.getElementById('allclear-modal').classList.remove('active');
+  solvedHanjaSet.clear();
+  startNewGame();
+}
+
+// ====================================================================
+// [심해 캔버스 물리 렌더러 (원본 물고기 물리 복원)]
+// ====================================================================
+const canvas = document.getElementById('oceanCanvas');
+const ctx = canvas.getContext('2d');
+let width, height;
+
+function resizeCanvas() {
+  width = canvas.width = window.innerWidth;
+  height = canvas.height = window.innerHeight;
+}
+resizeCanvas();
+window.addEventListener('resize', resizeCanvas);
+
+const tintCanvas = document.createElement('canvas');
+const tintCtx = tintCanvas.getContext('2d');
+
+const TIER_SPECS = [
+  {
+    tier: 3,
+    name: "대왕고래급",
+    files: [
+      "emojis/fish/fish_rank/tier3_whale1.svg",
+      "emojis/fish/fish_rank/tier3_whale2.svg",
+      "emojis/fish/fish_rank/tier3_whale3.svg"
+    ],
+    fallbackFile: "emojis/fish/fish_fallback/fish_tier3_FB.svg",
+    emojiChar: "🐋",
+    size: 140,
+    speedMin: 0.7, speedMax: 1.0,
+    depthMaxRatio: 0.95,
+    tintAlpha: 0.35,
+    bodyAlpha: 0.95
+  },
+  {
+    tier: 2,
+    name: "상어/돌고래급",
+    files: [
+      "emojis/fish/fish_rank/tier2_shark.svg",
+      "emojis/fish/fish_rank/tier2_shark2.svg",
+      "emojis/fish/fish_rank/tier2_shark3.svg",
+      "emojis/fish/fish_rank/tier2_sunfish.svg"
+    ],
+    fallbackFile: "emojis/fish/fish_fallback/fish_tier2_FB.svg",
+    emojiChar: "🦈",
+    size: 90,
+    speedMin: 0.7, speedMax: 1.0,
+    depthMaxRatio: 0.75,
+    tintAlpha: 0.38,
+    bodyAlpha: 0.92
+  },
+  {
+    tier: 1,
+    name: "거북/가오리급",
+    files: [
+      "emojis/fish/fish_rank/tier1_jellyfish.svg",
+      "emojis/fish/fish_rank/tier1_seaturtle.svg",
+      "emojis/fish/fish_rank/tier1_squid.svg"
+    ],
+    fallbackFile: "emojis/fish/fish_fallback/fish_tier1_FB.svg",
+    emojiChar: "🐢",
+    size: 52,
+    speedMin: 0.7, speedMax: 1.0,
+    depthMaxRatio: 0.52,
+    tintAlpha: 0.42,
+    bodyAlpha: 0.90
+  },
+  {
+    tier: 0,
+    name: "작은 물고기급",
+    files: [
+      "emojis/fish/fish_rank/tier0_clown_fish.svg",
+      "emojis/fish/fish_rank/tier0_fish1.svg",
+      "emojis/fish/fish_rank/tier0_fish2.svg",
+      "emojis/fish/fish_rank/tier0_shrimp.svg"
+    ],
+    fallbackFile: "emojis/fish/fish_fallback/fish_tier0_FB.svg",
+    emojiChar: "🐟",
+    size: 32,
+    speedMin: 0.7, speedMax: 1.0,
+    depthMaxRatio: 0.32,
+    tintAlpha: 0.35,
+    bodyAlpha: 0.94
+  }
+];
+
+TIER_SPECS.forEach(spec => {
+  spec.loadedImages = [];
+  spec.files.forEach((filePath, idx) => {
+    const img = new Image();
+    img.src = filePath;
+    img.onload = () => { spec.loadedImages[idx] = img; };
+    img.onerror = () => { spec.loadedImages[idx] = null; };
+  });
+
+  spec.loadedFallback = new Image();
+  spec.loadedFallback.src = spec.fallbackFile;
+});
+
+let totalSolvedCount = parseInt(localStorage.getItem('hanja_ocean_fish_count') || '0', 10);
+let swimmingCreatures = [];
+let bubbles = [];
+
+const GRID_SIZE = 6;
+let currentActiveHanjas = [];
+let solvedInCurrentBoard = 0;
+let board = [];
+let cellMap = {};
+let activeTooltipTarget = null;
+
+// 샘플 보기 제어
+let isSampleMode = false;
+let backupSolvedCount = 0;
+
+function handleSampleClick() {
+  const sampleBtn = document.getElementById('sampleBtn');
+  const header = document.getElementById('oceanHeader');
+
+  if (!isSampleMode) {
+    const inputVal = prompt("샘플로 보고 싶은 문제 개수를 입력하세요:", "9999");
+    if (inputVal === null) return;
+
+    const targetNum = parseInt(inputVal.trim(), 10);
+    if (isNaN(targetNum) || targetNum < 0) {
+      alert("올바른 숫자를 입력해주세요.");
+      return;
+    }
+
+    isSampleMode = true;
+    backupSolvedCount = totalSolvedCount;
+    totalSolvedCount = targetNum;
+    header.classList.add('sample-mode');
+    sampleBtn.classList.add('active');
+    sampleBtn.innerText = "샘플 보기 중지 (원래대로)";
+
+    syncEcosystem();
+    closeSettings();
+  } else {
+    isSampleMode = false;
+    totalSolvedCount = backupSolvedCount;
+    header.classList.remove('sample-mode');
+    sampleBtn.classList.remove('active');
+    sampleBtn.innerText = "샘플 보기";
+
+    syncEcosystem();
+    closeSettings();
+  }
+}
+
+function spawnBubbles(x, y, count, isBig = false, reachSurface = false) {
+  for (let i = 0; i < count; i++) {
+    bubbles.push({
+      x: x + (Math.random() - 0.5) * (isBig ? 50 : 25),
+      y: y + (Math.random() - 0.5) * (isBig ? 30 : 15),
+      vx: (Math.random() - 0.5) * (isBig ? 3.5 : 2),
+      vy: -(Math.random() * (isBig ? 4.5 : 2.5) + (isBig ? 3.0 : 1.8)),
+      radius: Math.random() * (isBig ? 8.5 : 4.5) + (isBig ? 3.5 : 2),
+      alpha: Math.random() * 0.35 + 0.55,
+      wobble: Math.random() * Math.PI * 2,
+      reachSurface: reachSurface
+    });
+  }
+}
+
+window.addEventListener('touchstart', (e) => {
+  if (e.target.closest('#grid') || e.target.closest('#settings-btn') || e.target.closest('#settings-modal') || e.target.closest('#allclear-modal') || e.target.closest('#next-refresh-btn')) return;
+  const touch = e.touches[0];
+  spawnBubbles(touch.clientX, touch.clientY, Math.floor(Math.random() * 3) + 5, false, false);
+}, { passive: false });
+
+window.addEventListener('mousedown', (e) => {
+  if (e.target.closest('#grid') || e.target.closest('#settings-btn') || e.target.closest('#settings-modal') || e.target.closest('#allclear-modal') || e.target.closest('#next-refresh-btn')) return;
+  spawnBubbles(e.clientX, e.clientY, Math.floor(Math.random() * 3) + 5, false, false);
+});
+
+function calculateCreatureCounts(n) {
+  const thousands = Math.floor(n / 1000);
+  const hundreds = Math.floor((n % 1000) / 100);
+  const tens = Math.floor((n % 100) / 10);
+  const ones = n % 10;
+  return { 3: thousands, 2: hundreds, 1: tens, 0: ones };
+}
+
+function updateTierText() {
+  const textContainer = document.getElementById('fishTotalText');
+  const tierEl = document.getElementById('tierInfoDisplay');
+
+  if (isSampleMode) {
+    textContainer.innerHTML = `✨ 샘플 누적 달성: <span id="fishTotalDisplay">${totalSolvedCount}</span>문제`;
+  } else {
+    textContainer.innerHTML = `🌊 누적 달성: <span id="fishTotalDisplay">${totalSolvedCount}</span>개`;
+  }
+
+  if (totalSolvedCount === 0) {
+    tierEl.innerText = "🌊 생태계: 바다가 조용합니다 (단어를 맞춰 생물을 불러오세요)";
+    return;
+  }
+
+  const counts = calculateCreatureCounts(totalSolvedCount);
+  let summary = [];
+  if (counts[3] > 0) summary.push(`🐋 고래 ${counts[3]}`);
+  if (counts[2] > 0) summary.push(`🐬 상어 ${counts[2]}`);
+  if (counts[1] > 0) summary.push(`🐢 거북 ${counts[1]}`);
+  if (counts[0] > 0) summary.push(`🐟 물고기 ${counts[0]}`);
+
+  const nextTierNeeded = 10 - (totalSolvedCount % 10);
+  tierEl.innerText = `현재 [${summary.join(' | ')}] (다음 합체까지 ${nextTierNeeded}문제)`;
+}
+
+function syncEcosystem() {
+  const counts = calculateCreatureCounts(totalSolvedCount);
+  const newCreatures = [];
+
+  TIER_SPECS.forEach(spec => {
+    const requiredCount = counts[spec.tier];
+    const existing = swimmingCreatures.filter(c => c.tier === spec.tier);
+
+    for (let i = 0; i < requiredCount; i++) {
+      if (existing[i]) {
+        newCreatures.push(existing[i]);
+      } else {
+        const chosenFileIndex = Math.floor(Math.random() * spec.files.length);
+        const baseSpeed = Math.random() * (spec.speedMax - spec.speedMin) + spec.speedMin;
+        
+        let angle = (spec.tier === 3) ? (Math.random() * Math.PI * 2) : ((Math.random() > 0.5 ? 0 : Math.PI) + (Math.random() - 0.5) * 1.1);
+        const maxInitY = height * spec.depthMaxRatio;
+
+        newCreatures.push({
+          tier: spec.tier,
+          spec: spec,
+          fileIndex: chosenFileIndex,
+          size: spec.size,
+          bodyAlpha: spec.bodyAlpha,
+          tintAlpha: spec.tintAlpha,
+          emojiChar: spec.emojiChar,
+          x: Math.random() * width,
+          y: Math.random() * maxInitY,
+          vx: Math.cos(angle) * baseSpeed,
+          vy: Math.sin(angle) * baseSpeed,
+          baseSpeed: baseSpeed,
+          currentSpeed: baseSpeed
+        });
+      }
+    }
+  });
+
+  newCreatures.sort((a, b) => a.tier - b.tier);
+  swimmingCreatures = newCreatures;
+  updateTierText();
+}
+
+function onCorrectWord(sourceX, sourceY) {
+  totalSolvedCount++;
+  if (!isSampleMode) {
+    localStorage.setItem('hanja_ocean_fish_count', totalSolvedCount);
+  }
+  syncEcosystem();
+
+  const isMerging = (Math.floor(totalSolvedCount / 10) > Math.floor((totalSolvedCount - 1) / 10)) ||
+                    (Math.floor(totalSolvedCount / 100) > Math.floor((totalSolvedCount - 1) / 100)) ||
+                    (Math.floor(totalSolvedCount / 1000) > Math.floor((totalSolvedCount - 1) / 1000));
+
+  if (isMerging) {
+    triggerVibration([70, 50, 120]);
+    spawnBubbles(sourceX, sourceY, 80, true, true);
+  } else {
+    triggerVibration(40);
+    spawnBubbles(sourceX, sourceY, 28, false, false);
+  }
+}
+
+function resetOcean() {
+  if (confirm("바다의 모든 생물과 진행 상황을 초기화할까요?")) {
+    if (isSampleMode) {
+      isSampleMode = false;
+      document.getElementById('oceanHeader').classList.remove('sample-mode');
+      const sBtn = document.getElementById('sampleBtn');
+      sBtn.classList.remove('active');
+      sBtn.innerText = "샘플 보기";
+    }
+    totalSolvedCount = 0;
+    solvedHanjaSet.clear();
+    localStorage.removeItem('hanja_ocean_fish_count');
+    bubbles = [];
+    syncEcosystem();
+    startNewGame();
+  }
+}
+
+const ambientBubbles = Array.from({ length: 24 }, () => ({
+  x: Math.random() * window.innerWidth,
+  y: Math.random() * window.innerHeight,
+  radius: Math.random() * 3.5 + 1.5,
+  speed: Math.random() * 0.6 + 0.3,
+  alpha: Math.random() * 0.3 + 0.1,
+  phase: Math.random() * Math.PI * 2
+}));
+
+let lastRenderTime = performance.now();
+
+function drawFallbackEmoji(ctx, size, emojiChar) {
+  ctx.save();
+  ctx.font = `${Math.floor(size * 0.85)}px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif`;
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.shadowColor = 'rgba(56, 189, 248, 0.4)';
+  ctx.shadowBlur = 8;
+  ctx.fillText(emojiChar, 0, 0);
+  ctx.restore();
+}
+
+function renderOcean(currentTime) {
+  const dt = Math.min((currentTime - lastRenderTime) / 1000, 0.1);
+  lastRenderTime = currentTime;
+  const timeScale = dt * 60;
+
+  ctx.clearRect(0, 0, width, height);
+
+  ctx.save();
+  const rayGrad = ctx.createLinearGradient(width * 0.5, 0, width * 0.5, height * 0.65);
+  rayGrad.addColorStop(0, 'rgba(56, 189, 248, 0.12)');
+  rayGrad.addColorStop(0.45, 'rgba(3, 105, 161, 0.04)');
+  rayGrad.addColorStop(1, 'rgba(2, 6, 23, 0)');
+  ctx.fillStyle = rayGrad;
+  ctx.fillRect(0, 0, width, height);
+  ctx.restore();
+
+  ambientBubbles.forEach(b => {
+    b.y -= b.speed * timeScale;
+    b.phase += 0.02 * timeScale;
+    b.x += Math.sin(b.phase) * 0.35;
+    if (b.y < -10) {
+      b.y = height + 10;
+      b.x = Math.random() * width;
+    }
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(186, 230, 253, ${b.alpha * 0.65})`;
+    ctx.fill();
+  });
+
+  swimmingCreatures.forEach(c => {
+    if (c.currentSpeed < c.baseSpeed) {
+      c.currentSpeed += (c.baseSpeed - c.currentSpeed) * 0.025 * timeScale;
+    }
+
+    const curLen = Math.hypot(c.vx, c.vy) || 1;
+    c.vx = (c.vx / curLen) * c.currentSpeed;
+    c.vy = (c.vy / curLen) * c.currentSpeed;
+
+    c.x += c.vx * timeScale;
+    c.y += c.vy * timeScale;
+
+    const margin = c.size * 1.5;
+    const minX = -margin;
+    const maxX = width + margin;
+    const minY = -margin;
+    let maxY = (c.tier === 3) ? (height + margin) : (height * c.spec.depthMaxRatio);
+
+    let collided = false;
+    if (c.x > maxX && c.vx > 0) { c.x = maxX; c.vx = -Math.abs(c.vx); collided = true; }
+    else if (c.x < minX && c.vx < 0) { c.x = minX; c.vx = Math.abs(c.vx); collided = true; }
+
+    if (c.y > maxY && c.vy > 0) { c.y = maxY; c.vy = -Math.abs(c.vy); collided = true; }
+    else if (c.y < minY && c.vy < 0) { c.y = minY; c.vy = Math.abs(c.vy); collided = true; }
+
+    if (collided) c.currentSpeed = c.baseSpeed * 0.45;
+
+    ctx.save();
+    ctx.translate(c.x, c.y);
+
+    const isFacingRight = c.vx >= 0;
+    if (!isFacingRight) ctx.scale(-1, 1);
+
+    const pitchAngle = Math.atan2(c.vy, Math.abs(c.vx));
+    ctx.rotate(pitchAngle * 0.65);
+    ctx.globalAlpha = c.bodyAlpha;
+
+    const primaryImg = c.spec.loadedImages ? c.spec.loadedImages[c.fileIndex] : null;
+    const targetImg = (primaryImg && primaryImg.complete && primaryImg.naturalWidth > 0) 
+                      ? primaryImg 
+                      : c.spec.loadedFallback;
+
+    if (targetImg && targetImg.complete && targetImg.naturalWidth > 0) {
+      const s = Math.ceil(c.size);
+      tintCanvas.width = s;
+      tintCanvas.height = s;
+      tintCtx.clearRect(0, 0, s, s);
+
+      tintCtx.drawImage(targetImg, 0, 0, s, s);
+      tintCtx.globalCompositeOperation = 'source-atop';
+      tintCtx.fillStyle = `rgba(3, 75, 125, ${c.tintAlpha})`;
+      tintCtx.fillRect(0, 0, s, s);
+      tintCtx.fillStyle = `rgba(1, 30, 60, ${c.tintAlpha * 0.5})`;
+      tintCtx.fillRect(0, 0, s, s);
+
+      ctx.drawImage(tintCanvas, -s / 2, -s / 2, s, s);
+    } else {
+      drawFallbackEmoji(ctx, c.size, c.emojiChar);
+    }
+
+    ctx.restore();
+  });
+
+  for (let i = bubbles.length - 1; i >= 0; i--) {
+    const b = bubbles[i];
+    b.x += (b.vx + Math.sin(b.wobble) * 0.5) * timeScale;
+    b.y += b.vy * timeScale;
+    b.wobble += 0.1 * timeScale;
+
+    if (b.reachSurface) {
+      if (b.y < 70) b.alpha -= 0.025 * timeScale;
+    } else {
+      b.alpha -= 0.009 * timeScale;
+    }
+
+    if (b.alpha <= 0 || b.y < -30) {
+      bubbles.splice(i, 1);
+      continue;
+    }
+
+    ctx.beginPath();
+    ctx.arc(b.x, b.y, b.radius, 0, Math.PI * 2);
+    ctx.strokeStyle = `rgba(224, 242, 254, ${b.alpha})`;
+    ctx.lineWidth = 1.4;
+    ctx.stroke();
+
+    ctx.beginPath();
+    ctx.arc(b.x - b.radius * 0.3, b.y - b.radius * 0.3, b.radius * 0.25, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(255, 255, 255, ${b.alpha * 0.85})`;
+    ctx.fill();
+  }
+
+  requestAnimationFrame(renderOcean);
+}
+
+// ====================================================================
+// [툴팁 제어 - 톡 치면 즉각 반응]
+// ====================================================================
+const tooltipEl = document.getElementById('tooltip');
+
+function showTooltip(targetEl, text) {
+  if (!text) return;
+  activeTooltipTarget = targetEl;
+  tooltipEl.innerText = text;
+  tooltipEl.style.display = 'block';
+
+  const rect = targetEl.getBoundingClientRect();
+  const tooltipWidth = tooltipEl.offsetWidth;
+  const tooltipHeight = tooltipEl.offsetHeight;
+
+  const showOnTop = rect.bottom + tooltipHeight + 12 > window.innerHeight;
+  tooltipEl.className = showOnTop ? 'top' : 'bottom';
+
+  let top = showOnTop ? (rect.top - tooltipHeight - 8) : (rect.bottom + 8);
+  const targetCenterX = rect.left + rect.width / 2;
+  let left = targetCenterX - tooltipWidth / 2;
+
+  if (left < 10) left = 10;
+  else if (left + tooltipWidth > window.innerWidth - 10) left = window.innerWidth - tooltipWidth - 10;
+
+  tooltipEl.style.setProperty('--arrow-left', `${targetCenterX - left}px`);
+  tooltipEl.style.top = `${top}px`;
+  tooltipEl.style.left = `${left}px`;
+}
+
+function hideTooltip() {
+  tooltipEl.style.display = 'none';
+  activeTooltipTarget = null;
+}
+
+function toggleHanjaTooltip(targetEl, text) {
+  if (activeTooltipTarget === targetEl && tooltipEl.style.display === 'block') {
+    hideTooltip();
+  } else {
+    showTooltip(targetEl, text);
+  }
+}
+
+// ====================================================================
+// [보드 생성 엔진]
+// ====================================================================
+function generate3StepBoard() {
+  const directions = [
+    [0, 1], [1, 0], [1, 1], [-1, 1],
+    [0, -1], [-1, 0], [-1, -1], [1, -1]
+  ];
+
+  for (let layoutAttempt = 0; layoutAttempt < 300; layoutAttempt++) {
+    let testBoard = Array.from({ length: GRID_SIZE }, () => Array(GRID_SIZE).fill(null));
+    let allPlaced = true;
+
+    for (const q of currentActiveHanjas) {
+      let placed = false;
+      let tries = 120;
+      while (!placed && tries-- > 0) {
+        const [dr, dc] = directions[Math.floor(Math.random() * directions.length)];
+        const r = Math.floor(Math.random() * GRID_SIZE);
+        const c = Math.floor(Math.random() * GRID_SIZE);
+        
+        const r2 = r + dr;
+        const c2 = c + dc;
+        const r3 = r + dr * 2;
+        const c3 = c + dc * 2;
+
+        if (r3 >= 0 && r3 < GRID_SIZE && c3 >= 0 && c3 < GRID_SIZE) {
+          if (testBoard[r][c] === null && testBoard[r2][c2] === null && testBoard[r3][c3] === null) {
+            testBoard[r][c] = {
+              text: q.hanja,
+              type: 'hanja',
+              desc: q.hanjaFullDesc,
+              ownerHanja: q.hanja,
+              step: 1
+            };
+            testBoard[r2][c2] = {
+              text: q.firstImo,
+              type: 'imo',
+              desc: "",
+              ownerHanja: q.hanja,
+              step: 2
+            };
+            testBoard[r3][c3] = {
+              text: q.secondImo,
+              type: 'imo',
+              desc: "",
+              ownerHanja: q.hanja,
+              step: 3
+            };
+            placed = true;
+          }
+        }
+      }
+      if (!placed) { allPlaced = false; break; }
+    }
+
+    if (!allPlaced) continue;
+
+    const activeImoSet = new Set();
+    currentActiveHanjas.forEach(q => {
+      activeImoSet.add(q.firstImo);
+      activeImoSet.add(q.secondImo);
+    });
+
+    let safeFillers = ALL_FILLER_IMOS.filter(f => !activeImoSet.has(f.text) && !containsHanja(f.text));
+    if (safeFillers.length === 0) safeFillers = DEFAULT_OCEAN_EMOJIS;
+
+    for (let r = 0; r < GRID_SIZE; r++) {
+      for (let c = 0; c < GRID_SIZE; c++) {
+        if (testBoard[r][c] === null) {
+          const rand = safeFillers[Math.floor(Math.random() * safeFillers.length)];
+          testBoard[r][c] = {
+            text: rand.text,
+            type: 'imo',
+            desc: "",
+            ownerHanja: null,
+            step: 0
+          };
+        }
+      }
+    }
+
+    board = testBoard;
+    return;
+  }
+}
+
+function startNewGame() {
+  hideTooltip();
+  solvedInCurrentBoard = 0;
+  if (HANJA_LIST.length === 0) return;
+
+  let availablePool = HANJA_LIST.filter(item => !solvedHanjaSet.has(item.hanja));
+  if (availablePool.length === 0) {
+    showAllClearModal();
+    return;
+  }
+
+  const TARGET_HANJA_COUNT = 5;
+  const countToPick = Math.min(TARGET_HANJA_COUNT, availablePool.length);
+
+  const pool = [...availablePool];
+  for (let i = pool.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [pool[i], pool[j]] = [pool[j], pool[i]];
+  }
+
+  currentActiveHanjas = pool.slice(0, countToPick).map(q => ({ ...q, isFound: false }));
+
+  generate3StepBoard();
+  renderGrid();
+}
+
+function renderGrid() {
+  const gridEl = document.getElementById('grid');
+  gridEl.innerHTML = '';
+  cellMap = {};
+
+  for (let r = 0; r < GRID_SIZE; r++) {
+    for (let c = 0; c < GRID_SIZE; c++) {
+      const item = board[r][c];
+
+      const cell = document.createElement('div');
+      cell.className = `cell type-${item.type}`;
+      cell.dataset.row = r;
+      cell.dataset.col = c;
+      cell.dataset.text = item.text;
+      cell.dataset.desc = item.desc || "";
+      cell.dataset.type = item.type;
+      cell.dataset.owner = item.ownerHanja || "";
+      cell.dataset.step = item.step;
+      cell.innerText = item.text;
+
+      gridEl.appendChild(cell);
+      cellMap[`${r},${c}`] = cell;
+    }
+  }
+}
+
+// ====================================================================
+// [조작 엔진: 탭 즉각 반응 & 3칸 일직선 드래그]
+// ====================================================================
+const gridEl = document.getElementById('grid');
+let isPointerActive = false;
+let isDraggingLine = false;
+let startCell = null;
+let startX = 0, startY = 0;
+let currentLineCells = [];
+
+function getCellFromPoint(x, y) {
+  const el = document.elementFromPoint(x, y);
+  if (!el) return null;
+  return el.classList.contains('cell') ? el : el.closest('.cell');
+}
+
+function clearHighlight() {
+  currentLineCells.forEach(cell => cell.classList.remove('selected'));
+  currentLineCells = [];
+}
+
+function calculateStraightLine(start, current) {
+  const r1 = parseInt(start.dataset.row);
+  const c1 = parseInt(start.dataset.col);
+  const r2 = parseInt(current.dataset.row);
+  const c2 = parseInt(current.dataset.col);
+
+  const dr = r2 - r1;
+  const dc = c2 - c1;
+
+  if (dr === 0 && dc === 0) return [start];
+  const absDr = Math.abs(dr);
+  const absDc = Math.abs(dc);
+  if (dr !== 0 && dc !== 0 && absDr !== absDc) return currentLineCells;
+
+  const stepR = dr === 0 ? 0 : dr / absDr;
+  const stepC = dc === 0 ? 0 : dc / absDc;
+  const distance = Math.max(absDr, absDc);
+
+  const line = [];
+  for (let i = 0; i <= distance; i++) {
+    const curR = r1 + stepR * i;
+    const curC = c1 + stepC * i;
+    const target = cellMap[`${curR},${curC}`];
+    if (target) line.push(target);
+  }
+  return line;
+}
+
+function handlePointerStart(clientX, clientY) {
+  const cell = getCellFromPoint(clientX, clientY);
+  if (!cell) {
+    hideTooltip();
+    return;
+  }
+
+  isPointerActive = true;
+  isDraggingLine = false;
+  startCell = cell;
+  startX = clientX;
+  startY = clientY;
+  clearHighlight();
+}
+
+function handlePointerMove(clientX, clientY) {
+  if (!isPointerActive || !startCell) return;
+
+  const dist = Math.hypot(clientX - startX, clientY - startY);
+
+  // 10px 이상 움직이면 드래그 모드로 전환
+  if (dist > 10) {
+    if (!isDraggingLine) {
+      isDraggingLine = true;
+      hideTooltip();
+      currentLineCells = [startCell];
+      startCell.classList.add('selected');
+    }
+  }
+
+  if (!isDraggingLine) return;
+
+  const hoverCell = getCellFromPoint(clientX, clientY);
+  if (!hoverCell) return;
+
+  const newLine = calculateStraightLine(startCell, hoverCell);
+  if (newLine && newLine.length > 0) {
+    currentLineCells.forEach(c => c.classList.remove('selected'));
+    currentLineCells = newLine;
+    currentLineCells.forEach(c => c.classList.add('selected'));
+  }
+}
+
+function handlePointerEnd() {
+  if (!isPointerActive) return;
+  isPointerActive = false;
+
+  // 1) 톡 가볍게 탭한 경우: 한자 타일이면 툴팁 토글, 그 외는 닫기
+  if (!isDraggingLine && startCell) {
+    if (startCell.dataset.type === 'hanja') {
+      toggleHanjaTooltip(startCell, startCell.dataset.desc);
+    } else {
+      hideTooltip();
+    }
+    clearHighlight();
+    startCell = null;
+    return;
+  }
+
+  // 2) 3칸 직선 드래그 완료 판정
+  let isCorrectMatch = false;
+
+  if (currentLineCells.length === 3) {
+    const c1 = currentLineCells[0];
+    const c2 = currentLineCells[1];
+    const c3 = currentLineCells[2];
+
+    const owner = c1.dataset.owner;
+    const step1 = parseInt(c1.dataset.step);
+    const step2 = parseInt(c2.dataset.step);
+    const step3 = parseInt(c3.dataset.step);
+
+    if (owner && owner === c2.dataset.owner && owner === c3.dataset.owner &&
+        step1 === 1 && step2 === 2 && step3 === 3) {
+      
+      const targetQuest = currentActiveHanjas.find(q => q.hanja === owner && !q.isFound);
+      if (targetQuest) {
+        targetQuest.isFound = true;
+        solvedInCurrentBoard++;
+        isCorrectMatch = true;
+
+        solvedHanjaSet.add(owner);
+
+        currentLineCells.forEach(c => {
+          c.classList.remove('selected');
+          c.classList.add('matched');
+        });
+
+        const firstRect = c1.getBoundingClientRect();
+        onCorrectWord(firstRect.left + firstRect.width / 2, firstRect.top + firstRect.height / 2);
+
+        if (solvedInCurrentBoard === currentActiveHanjas.length) {
+          setTimeout(() => {
+            triggerVibration([30, 40, 50]);
+            for (let i = 0; i < 4; i++) {
+              spawnBubbles(width * (0.2 + i * 0.2), height * 0.8, 16, true, true);
+            }
+            startNewGame();
+          }, 850);
+        }
+      }
+    }
+  }
+
+  if (!isCorrectMatch) {
+    clearHighlight();
+  }
+
+  currentLineCells = [];
+  startCell = null;
+  isDraggingLine = false;
+}
+
+// 터치 이벤트
+gridEl.addEventListener('touchstart', (e) => {
+  const t = e.touches[0];
+  handlePointerStart(t.clientX, t.clientY);
+}, { passive: true });
+
+window.addEventListener('touchmove', (e) => {
+  if (!isPointerActive) return;
+  const t = e.touches[0];
+  handlePointerMove(t.clientX, t.clientY);
+}, { passive: true });
+
+window.addEventListener('touchend', () => {
+  if (!isPointerActive) return;
+  handlePointerEnd();
+}, { passive: true });
+
+// 마우스 이벤트 (PC/웹뷰 공용)
+gridEl.addEventListener('mousedown', (e) => handlePointerStart(e.clientX, e.clientY));
+window.addEventListener('mousemove', (e) => handlePointerMove(e.clientX, e.clientY));
+window.addEventListener('mouseup', () => handlePointerEnd());
+
+// 바깥 영역 터치 시 툴팁 닫기
+document.addEventListener('pointerdown', (e) => {
+  if (!e.target.closest('.cell') && !e.target.closest('#settings-btn') && !e.target.closest('#settings-modal') && !e.target.closest('#allclear-modal') && !e.target.closest('#next-refresh-btn')) {
+    hideTooltip();
+  }
+});
+
+async function initGameApp() {
+  const success = await loadSheetData();
+  if (success) {
+    syncEcosystem();
+    requestAnimationFrame(renderOcean);
+    startNewGame();
+  } else {
+    alert("구글 시트 데이터를 불러오지 못했습니다.");
+  }
+}
+
+initGameApp();
+</script>
+
+</body>
+</html>
