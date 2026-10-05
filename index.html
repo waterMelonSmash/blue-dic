@@ -782,14 +782,12 @@ function renderRestoredQuestions() {
     card.innerText = q.hanja;
 
     const handlePressStart = (e) => {
-      e.preventDefault();
       e.stopPropagation();
       card.classList.add('active-preview');
       showTooltip(card, q.hanjaLongDesc);
     };
 
     const handlePressEnd = (e) => {
-      e.preventDefault();
       card.classList.remove('active-preview');
       hideTooltip();
     };
@@ -797,9 +795,9 @@ function renderRestoredQuestions() {
     card.addEventListener('mousedown', handlePressStart);
     card.addEventListener('mouseup', handlePressEnd);
     card.addEventListener('mouseleave', handlePressEnd);
-    card.addEventListener('touchstart', handlePressStart, { passive: false });
-    card.addEventListener('touchend', handlePressEnd, { passive: false });
-    card.addEventListener('touchcancel', handlePressEnd, { passive: false });
+    card.addEventListener('touchstart', handlePressStart, { passive: true });
+    card.addEventListener('touchend', handlePressEnd, { passive: true });
+    card.addEventListener('touchcancel', handlePressEnd, { passive: true });
 
     questListEl.appendChild(card);
   });
@@ -838,10 +836,9 @@ function spawnBubbles(x, y, count, isBig = false, reachSurface = false) {
 
 window.addEventListener('touchstart', (e) => {
   if (e.target.closest('#grid') || e.target.closest('.quest-card') || e.target.closest('#settings-btn') || e.target.closest('#settings-modal') || e.target.closest('#next-refresh-btn') || e.target.closest('#allclear-modal')) return;
-  e.preventDefault();
   const touch = e.touches[0];
   spawnBubbles(touch.clientX, touch.clientY, Math.floor(Math.random() * 3) + 5, false, false);
-}, { passive: false });
+}, { passive: true });
 
 window.addEventListener('mousedown', (e) => {
   if (e.target.closest('#grid') || e.target.closest('.quest-card') || e.target.closest('#settings-btn') || e.target.closest('#settings-modal') || e.target.closest('#next-refresh-btn') || e.target.closest('#allclear-modal')) return;
@@ -1170,15 +1167,13 @@ function toggleTileTooltip(targetEl, text) {
   }
 }
 
-// 빈 바다 영역을 탭했을 때만 툴팁 닫기
-function handleOutsideDismiss(e) {
+// 화면 바깥 터치 시에만 툴팁 닫기
+document.addEventListener('pointerdown', (e) => {
   if (e.target.closest('.quest-card') || e.target.closest('.cell') || e.target.closest('#settings-btn') || e.target.closest('#settings-modal') || e.target.closest('#allclear-modal') || e.target.closest('#next-refresh-btn')) {
     return;
   }
   hideTooltip();
-}
-document.addEventListener('touchstart', handleOutsideDismiss, { passive: true });
-document.addEventListener('mousedown', handleOutsideDismiss);
+});
 
 function generateSafeBoard() {
   const directions = [
@@ -1282,14 +1277,12 @@ function startNewGame() {
     card.innerText = q.hanja;
 
     const handlePressStart = (e) => {
-      e.preventDefault();
       e.stopPropagation();
       card.classList.add('active-preview');
       showTooltip(card, q.hanjaLongDesc);
     };
 
     const handlePressEnd = (e) => {
-      e.preventDefault();
       card.classList.remove('active-preview');
       hideTooltip();
     };
@@ -1297,9 +1290,9 @@ function startNewGame() {
     card.addEventListener('mousedown', handlePressStart);
     card.addEventListener('mouseup', handlePressEnd);
     card.addEventListener('mouseleave', handlePressEnd);
-    card.addEventListener('touchstart', handlePressStart, { passive: false });
-    card.addEventListener('touchend', handlePressEnd, { passive: false });
-    card.addEventListener('touchcancel', handlePressEnd, { passive: false });
+    card.addEventListener('touchstart', handlePressStart, { passive: true });
+    card.addEventListener('touchend', handlePressEnd, { passive: true });
+    card.addEventListener('touchcancel', handlePressEnd, { passive: true });
 
     questListEl.appendChild(card);
   });
@@ -1335,14 +1328,13 @@ function renderGrid() {
 }
 
 // ====================================================================
-// [터치/클릭 즉각 반응 드래그 & 탭 판정 엔진]
+// [모바일 터치 탭 / 드래그 통합 조작 엔진]
 // ====================================================================
 const gridEl = document.getElementById('grid');
-let isDragging = false;
+let isPointerDown = false;
+let isDraggingMode = false;
 let startCell = null;
 let startX = 0, startY = 0;
-let hasMovedFar = false;
-let touchStartTime = 0;
 let currentLineCells = [];
 
 function getCellFromPoint(x, y) {
@@ -1384,36 +1376,36 @@ function calculateStraightLine(start, current) {
   return line;
 }
 
-function handleStart(e) {
-  const pt = e.touches ? e.touches[0] : e;
-  const cell = getCellFromPoint(pt.clientX, pt.clientY);
+function onTouchOrMouseDown(clientX, clientY) {
+  const cell = getCellFromPoint(clientX, clientY);
   if (!cell) return;
 
-  isDragging = true;
-  hasMovedFar = false;
-  touchStartTime = Date.now();
+  isPointerDown = true;
+  isDraggingMode = false;
   startCell = cell;
-  startX = pt.clientX;
-  startY = pt.clientY;
-
+  startX = clientX;
+  startY = clientY;
   clearHighlight();
-  currentLineCells = [cell];
-  cell.classList.add('selected');
 }
 
-function handleMove(e) {
-  if (!isDragging || !startCell) return;
-  const pt = e.touches ? e.touches[0] : e;
+function onTouchOrMouseMove(clientX, clientY) {
+  if (!isPointerDown || !startCell) return;
 
-  const dist = Math.hypot(pt.clientX - startX, pt.clientY - startY);
-  if (dist > 12) {
-    if (!hasMovedFar) {
+  const dist = Math.hypot(clientX - startX, clientY - startY);
+  
+  // 10px 이상 손가락이 움직였을 때만 드래그 모드로 전환
+  if (dist > 10) {
+    if (!isDraggingMode) {
+      isDraggingMode = true;
       hideTooltip();
-      hasMovedFar = true;
+      currentLineCells = [startCell];
+      startCell.classList.add('selected');
     }
   }
 
-  const hoverCell = getCellFromPoint(pt.clientX, pt.clientY);
+  if (!isDraggingMode) return;
+
+  const hoverCell = getCellFromPoint(clientX, clientY);
   if (!hoverCell) return;
 
   const newLine = calculateStraightLine(startCell, hoverCell);
@@ -1424,21 +1416,19 @@ function handleMove(e) {
   }
 }
 
-function handleEnd(e) {
-  if (!isDragging) return;
-  isDragging = false;
-  const elapsed = Date.now() - touchStartTime;
+function onTouchOrMouseUp() {
+  if (!isPointerDown) return;
+  isPointerDown = false;
 
-  // 가벼운 터치(탭/클릭): 이동 거리가 작으면 시간과 무관하게 즉시 설명 토글
-  if (!hasMovedFar && startCell) {
-    startCell.classList.remove('selected');
+  // 드래그 없이 가볍게 톡 쳤을 때: 즉시 짧은 의미 토글!
+  if (!isDraggingMode && startCell) {
     toggleTileTooltip(startCell, startCell.dataset.short);
-    currentLineCells = [];
+    clearHighlight();
     startCell = null;
     return;
   }
 
-  // 2개 타일 직선 드래그 매칭 판정
+  // 드래그해서 2개 타일을 이었을 때 정답 판정
   let isCorrectMatch = false;
 
   if (currentLineCells.length === 2) {
@@ -1484,37 +1474,41 @@ function handleEnd(e) {
   }
 
   if (!isCorrectMatch) {
-    currentLineCells.forEach(c => c.classList.remove('selected'));
+    clearHighlight();
   }
 
   currentLineCells = [];
   startCell = null;
+  isDraggingMode = false;
 }
 
-// 마우스 이벤트
-gridEl.addEventListener('mousedown', handleStart);
-window.addEventListener('mousemove', handleMove);
-window.addEventListener('mouseup', handleEnd);
+// 마우스 이벤트 연동
+gridEl.addEventListener('mousedown', (e) => {
+  onTouchOrMouseDown(e.clientX, e.clientY);
+});
+window.addEventListener('mousemove', (e) => {
+  onTouchOrMouseMove(e.clientX, e.clientY);
+});
+window.addEventListener('mouseup', () => {
+  onTouchOrMouseUp();
+});
 
-// 모바일 터치 이벤트: passive: false 로 브라우저 기본 제스처 간섭 차단
+// 모바일 터치 이벤트 연동 (안드로이드 웹뷰 완벽 지원)
 gridEl.addEventListener('touchstart', (e) => {
-  e.preventDefault();
-  handleStart(e);
-}, { passive: false });
+  const touch = e.touches[0];
+  onTouchOrMouseDown(touch.clientX, touch.clientY);
+}, { passive: true });
 
 window.addEventListener('touchmove', (e) => {
-  if (isDragging) {
-    e.preventDefault();
-    handleMove(e);
-  }
-}, { passive: false });
+  if (!isPointerDown) return;
+  const touch = e.touches[0];
+  onTouchOrMouseMove(touch.clientX, touch.clientY);
+}, { passive: true });
 
 window.addEventListener('touchend', (e) => {
-  if (isDragging) {
-    e.preventDefault();
-    handleEnd(e);
-  }
-}, { passive: false });
+  if (!isPointerDown) return;
+  onTouchOrMouseUp();
+}, { passive: true });
 
 async function initGameApp() {
   const success = await loadSheetData();
