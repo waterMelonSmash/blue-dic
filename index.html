@@ -116,16 +116,16 @@
     position: fixed;
     background: #082f49;
     color: #f0fdf4;
-    border: 1px solid rgba(56, 189, 248, 0.4);
-    padding: 9px 13px;
-    border-radius: 12px;
+    border: 1.5px solid rgba(56, 189, 248, 0.5);
+    padding: 10px 14px;
+    border-radius: 14px;
     font-size: 12.5px;
     font-weight: 500;
-    line-height: 1.45;
-    max-width: 250px;
-    text-align: center;
+    line-height: 1.5;
+    max-width: 270px;
+    text-align: left;
     white-space: pre-line;
-    box-shadow: 0 12px 30px rgba(0,0,0,0.7);
+    box-shadow: 0 14px 32px rgba(0,0,0,0.75);
     z-index: 9999;
     pointer-events: none;
     animation: fadeIn 0.15s ease-out;
@@ -183,7 +183,7 @@
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
   }
 
-  /* 1) 정답 한자 타일: 라운드당 정확히 5개만 파란색 타일로 노출 */
+  /* 1) 정답 한자 타일: 라운드당 5개만 파란 타일 */
   .cell.type-hanja {
     background: linear-gradient(135deg, #0284c7, #075985);
     border: 2px solid #38bdf8;
@@ -213,7 +213,7 @@
     background: linear-gradient(rgba(249, 115, 22, 0.3), rgba(249, 115, 22, 0.3)), #ffffff !important;
   }
 
-  /* 정답 완료 상태 */
+  /* 정답 매칭 완료 */
   .cell.matched {
     border: 2.5px solid #2ecc71 !important;
     box-shadow: 0 0 14px rgba(46, 204, 113, 0.9) !important;
@@ -349,7 +349,7 @@
   <div class="game-container">
     <div class="ocean-header" id="oceanHeader">
       <div class="fish-count" id="fishTotalText">🌊 누적 달성: <span id="fishTotalDisplay">0</span>문제</div>
-      <div class="sub-guide" id="tierInfoDisplay">[한자 ➔ 의미1 ➔ 의미2] 순서로 이어보세요!</div>
+      <div class="sub-guide" id="tierInfoDisplay">한자 타일을 누르면 힌트가 표시됩니다!</div>
     </div>
 
     <div id="tooltip"></div>
@@ -390,21 +390,9 @@ function triggerVibration(pattern) {
   }
 }
 
-// 한자(CJK Unified Ideographs) 포함 여부 검사
+// 한자(CJK) 포함 여부 판정
 function containsHanja(str) {
   return /[\u4E00-\u9FFF\u3400-\u4DBF\uF900-\uFAFF]/.test(str);
-}
-
-function splitMeaning(rawText) {
-  if (!rawText) return { short: "", long: "" };
-  const colonIndex = rawText.indexOf(':');
-  if (colonIndex !== -1) {
-    return {
-      short: rawText.substring(0, colonIndex).trim(),
-      long: rawText.substring(colonIndex + 1).trim()
-    };
-  }
-  return { short: rawText.trim(), long: rawText.trim() };
 }
 
 const URL_DATA_SHEET = "https://docs.google.com/spreadsheets/d/e/2PACX-1vRCtYO07v05Ud7heXDdK7k4RCaG5i5oELPe5oBhvFw6yaKsxXzKVO1L2_Lodc89WtLgNO3T5V5a-r8v/pub?gid=0&single=true&output=csv";
@@ -413,18 +401,10 @@ let HANJA_LIST = [];
 let ALL_FILLER_IMOS = [];
 let solvedHanjaSet = new Set();
 
-// 기본 안전 해양 이모티콘 풀 (시트 이모티콘 열에 한자가 잘못 적혀있을 때 대체용)
 const DEFAULT_OCEAN_EMOJIS = [
-  { text: "🌊", type: "imo", desc: "바다 물결" },
-  { text: "🐟", type: "imo", desc: "작은 물고기" },
-  { text: "🐬", type: "imo", desc: "돌고래" },
-  { text: "🐳", type: "imo", desc: "고래" },
-  { text: "🐙", type: "imo", desc: "문어" },
-  { text: "🦀", type: "imo", desc: "게" },
-  { text: "🪸", type: "imo", desc: "산호초" },
-  { text: "🐚", type: "imo", desc: "조개껍데기" },
-  { text: "🫧", type: "imo", desc: "방울" },
-  { text: "🐢", type: "imo", desc: "바다거북" }
+  { text: "🌊" }, { text: "🐟" }, { text: "🐬" }, { text: "🐳" },
+  { text: "🐙" }, { text: "🦀" }, { text: "🪸" }, { text: "🐚" },
+  { text: "🫧" }, { text: "🐢" }
 ];
 
 function parseCSV(text) {
@@ -465,33 +445,25 @@ async function loadSheetData() {
 
       const hanja = r[0].trim();
       const imo1 = (r[1] || "").trim();
-      const mean1Raw = (r[2] || "").trim();
+      const mean1 = (r[2] || "").trim();
       const imo2 = (r[3] || "").trim();
-      const mean2Raw = (r[4] || "").trim();
+      const mean2 = (r[4] || "").trim();
 
       if (!imo1 || !imo2) continue;
 
-      const m1 = splitMeaning(mean1Raw);
-      const m2 = splitMeaning(mean2Raw);
+      // ★ 한자 타일 전용 전체 설명 툴팁 텍스트 구성 (이모지 + 설명 일체화)
+      const fullDesc = `한자: 【 ${hanja} 】\n[1] ${imo1} ${mean1}\n[2] ${imo2} ${mean2}`;
 
       HANJA_LIST.push({
         hanja: hanja,
         firstImo: imo1,
-        firstShort: m1.short,
-        firstLong: m1.long,
         secondImo: imo2,
-        secondShort: m2.short,
-        secondLong: m2.long,
-        hanjaFullDesc: `[1] ${m1.long}\n[2] ${m2.long}`
+        hanjaFullDesc: fullDesc
       });
 
-      // 빈칸을 채울 때는 '한자 글자'가 절대 섞이지 않도록 정규식으로 엄격 차단
-      if (!containsHanja(imo1)) {
-        ALL_FILLER_IMOS.push({ text: imo1, type: 'imo', desc: m1.short });
-      }
-      if (!containsHanja(imo2)) {
-        ALL_FILLER_IMOS.push({ text: imo2, type: 'imo', desc: m2.short });
-      }
+      // 빈칸 채우기용 이모티콘 풀 (한자 섞임 방지)
+      if (!containsHanja(imo1)) ALL_FILLER_IMOS.push({ text: imo1 });
+      if (!containsHanja(imo2)) ALL_FILLER_IMOS.push({ text: imo2 });
     }
 
     if (ALL_FILLER_IMOS.length === 0) {
@@ -783,7 +755,7 @@ function renderOcean(currentTime) {
     if (c.x > maxX && c.vx > 0) { c.x = maxX; c.vx = -Math.abs(c.vx); collided = true; }
     else if (c.x < minX && c.vx < 0) { c.x = minX; c.vx = Math.abs(c.vx); collided = true; }
     if (c.y > maxY && c.vy > 0) { c.y = maxY; c.vy = -Math.abs(c.vy); collided = true; }
-    else if (c.y < minY && c.vy < 0) { c.y = minY; c.vy = Math.abs(c.vy); collided = true; }
+    else if (c.y < minY && c.vy < 0) { c.y = minY; c.vy = -Math.abs(c.vy); collided = true; }
 
     if (collided) c.currentSpeed = c.baseSpeed * 0.45;
 
@@ -863,7 +835,7 @@ function hideTooltip() {
   activeTooltipTarget = null;
 }
 
-function toggleTileTooltip(targetEl, text) {
+function toggleHanjaTooltip(targetEl, text) {
   if (activeTooltipTarget === targetEl && tooltipEl.style.display === 'block') {
     hideTooltip();
   } else {
@@ -911,7 +883,7 @@ function generate3StepBoard() {
 
         if (r3 >= 0 && r3 < GRID_SIZE && c3 >= 0 && c3 < GRID_SIZE) {
           if (testBoard[r][c] === null && testBoard[r2][c2] === null && testBoard[r3][c3] === null) {
-            // 1단계: 정답 한자 타일 (파란색)
+            // 1단계: 정답 한자 타일 (파란색, 전체 설명 저장)
             testBoard[r][c] = {
               text: q.hanja,
               type: 'hanja',
@@ -919,19 +891,19 @@ function generate3StepBoard() {
               ownerHanja: q.hanja,
               step: 1
             };
-            // 2단계: 1번 이모티콘 (흰색)
+            // 2단계: 1번 이모티콘 (흰색, 개별 설명 미표시)
             testBoard[r2][c2] = {
               text: q.firstImo,
               type: 'imo',
-              desc: q.firstShort,
+              desc: "",
               ownerHanja: q.hanja,
               step: 2
             };
-            // 3단계: 2번 이모티콘 (흰색)
+            // 3단계: 2번 이모티콘 (흰색, 개별 설명 미표시)
             testBoard[r3][c3] = {
               text: q.secondImo,
               type: 'imo',
-              desc: q.secondShort,
+              desc: "",
               ownerHanja: q.hanja,
               step: 3
             };
@@ -961,7 +933,7 @@ function generate3StepBoard() {
           testBoard[r][c] = {
             text: rand.text,
             type: 'imo',
-            desc: rand.desc,
+            desc: "",
             ownerHanja: null,
             step: 0
           };
@@ -982,7 +954,6 @@ function startNewGame() {
   solvedInCurrentBoard = 0;
   if (HANJA_LIST.length === 0) return;
 
-  // 아직 맞히지 않은 한자만 추출
   let availablePool = HANJA_LIST.filter(item => !solvedHanjaSet.has(item.hanja));
 
   if (availablePool.length === 0) {
@@ -990,7 +961,6 @@ function startNewGame() {
     return;
   }
 
-  // ★ 정답 한자 개수: 5개로 고정 (남은 한자가 5개 미만이면 남은 전체 출제)
   const TARGET_HANJA_COUNT = 5;
   const countToPick = Math.min(TARGET_HANJA_COUNT, availablePool.length);
 
@@ -1020,7 +990,8 @@ function renderGrid() {
       cell.dataset.row = r;
       cell.dataset.col = c;
       cell.dataset.text = item.text;
-      cell.dataset.desc = item.desc;
+      cell.dataset.desc = item.desc || "";
+      cell.dataset.type = item.type;
       cell.dataset.owner = item.ownerHanja || "";
       cell.dataset.step = item.step;
       cell.innerText = item.text;
@@ -1031,7 +1002,7 @@ function renderGrid() {
   }
 }
 
-// 조작 엔진: 탭(설명 툴팁) vs 3칸 직선 드래그 매칭
+// 조작 엔진: 한자 탭(전체 설명 툴팁 토글) vs 3칸 직선 드래그 매칭
 const gridEl = document.getElementById('grid');
 let isPointerActive = false;
 let isDragMode = false;
@@ -1121,9 +1092,14 @@ function onTouchEnd() {
   if (!isPointerActive) return;
   isPointerActive = false;
 
-  // 1) 드래그 없이 탭한 경우: 설명 툴팁 토글
+  // 1) 드래그 없이 탭한 경우:
+  // ★ '한자 타일'일 때만 전체 설명 툴팁 토글, 이모티콘 타일은 아무 동작 안 함
   if (!isDragMode && startCell) {
-    toggleTileTooltip(startCell, startCell.dataset.desc);
+    if (startCell.dataset.type === 'hanja') {
+      toggleHanjaTooltip(startCell, startCell.dataset.desc);
+    } else {
+      hideTooltip();
+    }
     clearHighlight();
     startCell = null;
     return;
@@ -1161,7 +1137,6 @@ function onTouchEnd() {
         const firstRect = c1.getBoundingClientRect();
         onCorrectWord(firstRect.left + firstRect.width / 2, firstRect.top + firstRect.height / 2);
 
-        // 5개 한자를 모두 맞히면 다음 판 시작
         if (solvedInCurrentBoard === currentActiveHanjas.length) {
           setTimeout(() => {
             triggerVibration([30, 40, 50]);
